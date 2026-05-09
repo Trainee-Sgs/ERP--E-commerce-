@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../providers/cart_abandonment_provider.dart';
 
 class CartAbandonmentScreen extends StatefulWidget {
   const CartAbandonmentScreen({super.key});
@@ -32,6 +34,11 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch data when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartAbandonmentProvider>().fetchAbandonedCarts();
+    });
   }
 
   @override
@@ -271,45 +278,110 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: 8,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
+          child: Consumer<CartAbandonmentProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchAbandonedCarts(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.items.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.shopping_cart_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No abandoned carts found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://picsum.photos/100'),
-                          fit: BoxFit.cover,
+                itemCount: provider.items.length,
+                itemBuilder: (context, index) {
+                  final item = provider.items[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: item.productImage.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    item.productImage,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A)),
+                                  ),
+                                )
+                              : const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A)),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.productName.isEmpty ? 'Cart #${item.cartNo}' : item.productName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'Qty: ${item.quantity} • Added: ${item.addedAt}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                              if (item.status.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF26A69A).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    item.status,
+                                    style: const TextStyle(color: Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Cart #CRT-800${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Abandoned by Customer $index', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right, color: Colors.grey),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

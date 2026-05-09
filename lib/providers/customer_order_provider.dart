@@ -3,42 +3,39 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../services/local_storage.dart';
 
-class WishlistItem {
+class CustomerOrderItem {
   final String id;
-  final String productId;
-  final String productName;
-  final String productImage;
-  final String price;
-  final String rating;
-  final String category;
-  final String addedDate;
+  final String orderId;
+  final String customerName;
+  final String amount;
+  final String orderDate;
+  final String status;
+  final String createdAt;
 
-  WishlistItem({
+  CustomerOrderItem({
     required this.id,
-    required this.productId,
-    required this.productName,
-    required this.productImage,
-    required this.price,
-    required this.rating,
-    required this.category,
-    required this.addedDate,
+    required this.orderId,
+    required this.customerName,
+    required this.amount,
+    required this.orderDate,
+    required this.status,
+    required this.createdAt,
   });
 
-  factory WishlistItem.fromJson(Map<String, dynamic> json) {
-    return WishlistItem(
+  factory CustomerOrderItem.fromJson(Map<String, dynamic> json) {
+    return CustomerOrderItem(
       id:           json['id']?.toString()           ?? '',
-      productId:    json['product_id']?.toString()   ?? '',
-      productName:  json['product_name']?.toString() ?? '',
-      productImage: json['product_image']?.toString()?? '',
-      price:        json['price']?.toString()        ?? '0.00',
-      rating:       json['rating']?.toString()       ?? '0.0',
-      category:     json['category']?.toString()     ?? '',
-      addedDate:    json['added_date']?.toString()   ?? '',
+      orderId:      json['order_id']?.toString()      ?? '',
+      customerName: json['customer_name']?.toString() ?? '',
+      amount:       json['total_amount']?.toString()  ?? json['amount']?.toString() ?? '0.00',
+      orderDate:    json['order_date']?.toString()    ?? '',
+      status:       json['status']?.toString()       ?? '',
+      createdAt:    json['created_at']?.toString()    ?? '',
     );
   }
 }
 
-class WishlistProvider extends ChangeNotifier {
+class CustomerOrderProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://erpsmart.in/total/api/m_api/';
 
   bool   _isLoading    = false;
@@ -47,10 +44,10 @@ class WishlistProvider extends ChangeNotifier {
   bool   get isLoading    => _isLoading;
   String get errorMessage => _errorMessage;
 
-  List<WishlistItem> _items = [];
-  List<WishlistItem> get items => _items;
+  List<CustomerOrderItem> _orders = [];
+  List<CustomerOrderItem> get orders => _orders;
 
-  Future<void> fetchWishlist() async {
+  Future<void> fetchCustomerOrders() async {
     _isLoading    = true;
     _errorMessage = '';
     notifyListeners();
@@ -74,7 +71,7 @@ class WishlistProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty ? deviceId : '123',
           'uid':       uid.isNotEmpty      ? uid      : '123',
           'role_id':   roleId.isNotEmpty   ? roleId   : '123',
-          'form':      'sm_main_form_80530',
+          'form':      'sm_main_form_-80520',
           'select':    '*',
         },
       );
@@ -83,14 +80,14 @@ class WishlistProvider extends ChangeNotifier {
         final decoded = json.decode(response.body);
 
         if (kDebugMode) {
-          debugPrint('WishlistProvider => Response: ${response.body}');
+          debugPrint('CustomerOrderProvider => Response: ${response.body}');
         }
 
         List<dynamic> rawList = [];
         if (decoded is List) {
           rawList = decoded;
         } else if (decoded is Map<String, dynamic>) {
-          for (final key in ['data', 'items', 'records', 'result', 'list']) {
+          for (final key in ['data', 'orders', 'records', 'result', 'list']) {
             if (decoded.containsKey(key) && decoded[key] is List) {
               rawList = decoded[key] as List<dynamic>;
               break;
@@ -106,18 +103,18 @@ class WishlistProvider extends ChangeNotifier {
           }
         }
 
-        _items = rawList
+        _orders = rawList
             .whereType<Map<String, dynamic>>()
-            .map((e) => WishlistItem.fromJson(e))
+            .map((e) => CustomerOrderItem.fromJson(e))
             .toList();
 
-        debugPrint('WishlistProvider => Loaded ${_items.length} items');
+        debugPrint('CustomerOrderProvider => Loaded ${_orders.length} orders');
       } else {
         _errorMessage = 'Server error: ${response.statusCode}';
       }
     } catch (e) {
-      _errorMessage = 'Failed to load wishlist: $e';
-      debugPrint('WishlistProvider => Exception: $e');
+      _errorMessage = 'Failed to load orders: $e';
+      debugPrint('CustomerOrderProvider => Exception: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

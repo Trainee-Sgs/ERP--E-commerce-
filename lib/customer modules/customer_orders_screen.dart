@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/customer_order_provider.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
   const CustomerOrdersScreen({super.key});
@@ -30,6 +32,11 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> with Single
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch orders when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CustomerOrderProvider>().fetchCustomerOrders();
+    });
   }
 
   @override
@@ -190,37 +197,104 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> with Single
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: 8,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
+          child: Consumer<CustomerOrderProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchCustomerOrders(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.orders.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No orders found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                itemCount: provider.orders.length,
+                itemBuilder: (context, index) {
+                  final order = provider.orders[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Row(
                       children: [
-                        Text('Order ID: ORD-500${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text('12-05-2026', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.customerName.isEmpty ? 'Order #${order.orderId}' : order.customerName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'Amount: ₹${order.amount} • Date: ${order.orderDate}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                              if (order.status.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (order.status.toLowerCase() == 'delivered' ? Colors.green : Colors.orange).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    order.status,
+                                    style: TextStyle(
+                                      color: order.status.toLowerCase() == 'delivered' ? Colors.green : Colors.orange,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
                       ],
                     ),
-                    const Divider(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total Amount', style: TextStyle(color: Colors.grey)),
-                        Text('\$${(index + 1) * 85}.00', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF26A69A))),
-                      ],
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

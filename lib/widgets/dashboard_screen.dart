@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app_drawer.dart';
-import 'app_bottom_nav_bar.dart';
+import 'package:erp_ecommerce/widgets/app_drawer.dart';
+import 'package:erp_ecommerce/widgets/app_bottom_nav_bar.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/category_provider.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -33,6 +35,11 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch categories when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CategoryProvider>().fetchCategories();
+    });
   }
 
   @override
@@ -219,22 +226,107 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
       children: [
         Padding(padding: const EdgeInsets.all(16), child: _buildSearchRow()),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 1, crossAxisSpacing: 16, mainAxisSpacing: 16),
-            itemCount: 8,
-            itemBuilder: (context, index) => Container(
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(radius: 30, backgroundColor: const Color(0xFFF1F5F9), child: Icon(Icons.category, color: const Color(0xFF26A69A), size: 30)),
-                  const SizedBox(height: 12),
-                  Text('Category $index', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('12 Items', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
-            ),
+          child: Consumer<CategoryProvider>(
+            builder: (context, categoryProvider, child) {
+              if (categoryProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (categoryProvider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(categoryProvider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => categoryProvider.fetchCategories(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (categoryProvider.categories.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.category_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No categories found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: categoryProvider.categories.length,
+                itemBuilder: (context, index) {
+                  final category = categoryProvider.categories[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: category.logoUrl.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      category.logoUrl,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.category, color: Color(0xFF26A69A), size: 40),
+                                    ),
+                                  )
+                                : const CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: Color(0xFFF1F5F9),
+                                    child: Icon(Icons.category, color: Color(0xFF26A69A), size: 30),
+                                  ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                          child: Column(
+                            children: [
+                              Text(
+                                category.name.isEmpty ? 'Category ${index + 1}' : category.name,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                category.brand.isEmpty ? 'Brand N/A' : category.brand,
+                                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ],

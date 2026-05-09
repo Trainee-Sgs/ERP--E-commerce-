@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/document_provider.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -31,6 +33,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch documents when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DocumentProvider>().fetchDocuments();
+    });
   }
 
   @override
@@ -248,38 +255,78 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
   }
 
   Widget _buildUploadHistory() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.description_outlined, color: Color(0xFF26A69A)),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Document_00${index + 1}.pdf', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('Category: License • 2.4 MB', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  ],
+    return Consumer<DocumentProvider>(
+      builder: (context, docProvider, child) {
+        if (docProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+        }
+
+        if (docProvider.errorMessage.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(docProvider.errorMessage, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => docProvider.fetchDocuments(),
+                  child: const Text('Retry'),
                 ),
+              ],
+            ),
+          );
+        }
+
+        if (docProvider.documents.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.folder_open_outlined, color: Colors.grey, size: 48),
+                const SizedBox(height: 16),
+                Text('No documents found', style: GoogleFonts.poppins(color: Colors.grey)),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(24),
+          itemCount: docProvider.documents.length,
+          itemBuilder: (context, index) {
+            final doc = docProvider.documents[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
               ),
-              const Icon(Icons.more_vert, color: Colors.grey),
-            ],
-          ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.description_outlined, color: Color(0xFF26A69A)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(doc.name.isEmpty ? 'Untitled Document' : doc.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('Category: ${doc.category.isEmpty ? 'General' : doc.category} • ${doc.fileSize}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.more_vert, color: Colors.grey),
+                ],
+              ),
+            );
+          },
         );
       },
     );

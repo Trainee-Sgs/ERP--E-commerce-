@@ -3,42 +3,45 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../services/local_storage.dart';
 
-class WishlistItem {
+class CartAbandonmentItem {
   final String id;
+  final String cartNo;
+  final String customerId;
   final String productId;
   final String productName;
   final String productImage;
-  final String price;
-  final String rating;
-  final String category;
-  final String addedDate;
+  final String quantity;
+  final String addedAt;
+  final String status;
 
-  WishlistItem({
+  CartAbandonmentItem({
     required this.id,
+    required this.cartNo,
+    required this.customerId,
     required this.productId,
     required this.productName,
     required this.productImage,
-    required this.price,
-    required this.rating,
-    required this.category,
-    required this.addedDate,
+    required this.quantity,
+    required this.addedAt,
+    required this.status,
   });
 
-  factory WishlistItem.fromJson(Map<String, dynamic> json) {
-    return WishlistItem(
+  factory CartAbandonmentItem.fromJson(Map<String, dynamic> json) {
+    return CartAbandonmentItem(
       id:           json['id']?.toString()           ?? '',
+      cartNo:       json['cart_no']?.toString()      ?? '',
+      customerId:   json['customer_id']?.toString()  ?? '',
       productId:    json['product_id']?.toString()   ?? '',
       productName:  json['product_name']?.toString() ?? '',
       productImage: json['product_image']?.toString()?? '',
-      price:        json['price']?.toString()        ?? '0.00',
-      rating:       json['rating']?.toString()       ?? '0.0',
-      category:     json['category']?.toString()     ?? '',
-      addedDate:    json['added_date']?.toString()   ?? '',
+      quantity:     json['quantity']?.toString()     ?? '',
+      addedAt:      json['added_at']?.toString()     ?? '',
+      status:       json['status']?.toString()       ?? '',
     );
   }
 }
 
-class WishlistProvider extends ChangeNotifier {
+class CartAbandonmentProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://erpsmart.in/total/api/m_api/';
 
   bool   _isLoading    = false;
@@ -47,10 +50,10 @@ class WishlistProvider extends ChangeNotifier {
   bool   get isLoading    => _isLoading;
   String get errorMessage => _errorMessage;
 
-  List<WishlistItem> _items = [];
-  List<WishlistItem> get items => _items;
+  List<CartAbandonmentItem> _items = [];
+  List<CartAbandonmentItem> get items => _items;
 
-  Future<void> fetchWishlist() async {
+  Future<void> fetchAbandonedCarts() async {
     _isLoading    = true;
     _errorMessage = '';
     notifyListeners();
@@ -74,7 +77,7 @@ class WishlistProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty ? deviceId : '123',
           'uid':       uid.isNotEmpty      ? uid      : '123',
           'role_id':   roleId.isNotEmpty   ? roleId   : '123',
-          'form':      'sm_main_form_80530',
+          'form':      'sm_main_form_-80540',
           'select':    '*',
         },
       );
@@ -83,7 +86,7 @@ class WishlistProvider extends ChangeNotifier {
         final decoded = json.decode(response.body);
 
         if (kDebugMode) {
-          debugPrint('WishlistProvider => Response: ${response.body}');
+          debugPrint('CartAbandonmentProvider => Response: ${response.body}');
         }
 
         List<dynamic> rawList = [];
@@ -108,16 +111,16 @@ class WishlistProvider extends ChangeNotifier {
 
         _items = rawList
             .whereType<Map<String, dynamic>>()
-            .map((e) => WishlistItem.fromJson(e))
+            .map((e) => CartAbandonmentItem.fromJson(e))
             .toList();
 
-        debugPrint('WishlistProvider => Loaded ${_items.length} items');
+        debugPrint('CartAbandonmentProvider => Loaded ${_items.length} records');
       } else {
         _errorMessage = 'Server error: ${response.statusCode}';
       }
     } catch (e) {
-      _errorMessage = 'Failed to load wishlist: $e';
-      debugPrint('WishlistProvider => Exception: $e');
+      _errorMessage = 'Failed to load records: $e';
+      debugPrint('CartAbandonmentProvider => Exception: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

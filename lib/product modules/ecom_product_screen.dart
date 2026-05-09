@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/ecom_product_provider.dart';
 
 class EcomProductScreen extends StatefulWidget {
   const EcomProductScreen({super.key});
@@ -11,8 +13,8 @@ class EcomProductScreen extends StatefulWidget {
 
 class _EcomProductScreenState extends State<EcomProductScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
-  bool _isGridView = false;
+  bool _isFormVisible = false;
+  bool _isGridView = true;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
 
@@ -30,6 +32,11 @@ class _EcomProductScreenState extends State<EcomProductScreen> with SingleTicker
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch products when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EcomProductProvider>().fetchEcomProducts();
+    });
   }
 
   Future<void> _selectDate(BuildContext context, bool isExpireDate) async {
@@ -191,50 +198,112 @@ class _EcomProductScreenState extends State<EcomProductScreen> with SingleTicker
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: 8,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-                  ],
+          child: Consumer<EcomProductProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchEcomProducts(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.items.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No products found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.8,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                itemCount: provider.items.length,
+                itemBuilder: (context, index) {
+                  final item = provider.items[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.shopping_bag_outlined,
+                                color: Color(0xFF26A69A),
+                                size: 40,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: const Center(child: Icon(Icons.shopping_cart_outlined, color: Colors.grey)),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${item.brandName} | ${item.category}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Code: ${item.code}',
+                                    style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Product Item ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text('Category ${index + 1}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          const Text('₹1,450', style: TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

@@ -3,42 +3,63 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../services/local_storage.dart';
 
-class WishlistItem {
+class EcomProductItem {
   final String id;
-  final String productId;
-  final String productName;
-  final String productImage;
-  final String price;
-  final String rating;
   final String category;
-  final String addedDate;
+  final String stockSaleType;
+  final String brandName;
+  final String gst;
+  final String name;
+  final String expireDate;
+  final String subCategory;
+  final String returnDate;
+  final String size;
+  final String uom;
+  final String code;
+  final String hsnCode;
+  final String description;
+  final String upcoming;
 
-  WishlistItem({
+  EcomProductItem({
     required this.id,
-    required this.productId,
-    required this.productName,
-    required this.productImage,
-    required this.price,
-    required this.rating,
     required this.category,
-    required this.addedDate,
+    required this.stockSaleType,
+    required this.brandName,
+    required this.gst,
+    required this.name,
+    required this.expireDate,
+    required this.subCategory,
+    required this.returnDate,
+    required this.size,
+    required this.uom,
+    required this.code,
+    required this.hsnCode,
+    required this.description,
+    required this.upcoming,
   });
 
-  factory WishlistItem.fromJson(Map<String, dynamic> json) {
-    return WishlistItem(
-      id:           json['id']?.toString()           ?? '',
-      productId:    json['product_id']?.toString()   ?? '',
-      productName:  json['product_name']?.toString() ?? '',
-      productImage: json['product_image']?.toString()?? '',
-      price:        json['price']?.toString()        ?? '0.00',
-      rating:       json['rating']?.toString()       ?? '0.0',
-      category:     json['category']?.toString()     ?? '',
-      addedDate:    json['added_date']?.toString()   ?? '',
+  factory EcomProductItem.fromJson(Map<String, dynamic> json) {
+    return EcomProductItem(
+      id:            json['id']?.toString()            ?? '',
+      category:      json['category']?.toString()      ?? '',
+      stockSaleType: json['stock_sale_type']?.toString() ?? '',
+      brandName:     json['brand_name']?.toString()    ?? '',
+      gst:           json['gst']?.toString()           ?? '',
+      name:          json['name']?.toString()          ?? '',
+      expireDate:    json['expire_date']?.toString()   ?? '',
+      subCategory:   json['sub_category']?.toString()  ?? '',
+      returnDate:    json['return_date']?.toString()   ?? '',
+      size:          json['size']?.toString()          ?? '',
+      uom:           json['uom']?.toString()           ?? '',
+      code:          json['code']?.toString()          ?? '',
+      hsnCode:       json['hsn_sac_code']?.toString()  ?? '',
+      description:   json['decrptn']?.toString()       ?? '',
+      upcoming:      json['up_coming']?.toString()     ?? '',
     );
   }
 }
 
-class WishlistProvider extends ChangeNotifier {
+class EcomProductProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://erpsmart.in/total/api/m_api/';
 
   bool   _isLoading    = false;
@@ -47,10 +68,10 @@ class WishlistProvider extends ChangeNotifier {
   bool   get isLoading    => _isLoading;
   String get errorMessage => _errorMessage;
 
-  List<WishlistItem> _items = [];
-  List<WishlistItem> get items => _items;
+  List<EcomProductItem> _items = [];
+  List<EcomProductItem> get items => _items;
 
-  Future<void> fetchWishlist() async {
+  Future<void> fetchEcomProducts() async {
     _isLoading    = true;
     _errorMessage = '';
     notifyListeners();
@@ -74,7 +95,7 @@ class WishlistProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty ? deviceId : '123',
           'uid':       uid.isNotEmpty      ? uid      : '123',
           'role_id':   roleId.isNotEmpty   ? roleId   : '123',
-          'form':      'sm_main_form_80530',
+          'form':      'sm_main_form_80001',
           'select':    '*',
         },
       );
@@ -83,14 +104,14 @@ class WishlistProvider extends ChangeNotifier {
         final decoded = json.decode(response.body);
 
         if (kDebugMode) {
-          debugPrint('WishlistProvider => Response: ${response.body}');
+          debugPrint('EcomProductProvider => Response: ${response.body}');
         }
 
         List<dynamic> rawList = [];
         if (decoded is List) {
           rawList = decoded;
         } else if (decoded is Map<String, dynamic>) {
-          for (final key in ['data', 'items', 'records', 'result', 'list']) {
+          for (final key in ['data', 'products', 'records', 'result', 'list']) {
             if (decoded.containsKey(key) && decoded[key] is List) {
               rawList = decoded[key] as List<dynamic>;
               break;
@@ -108,16 +129,16 @@ class WishlistProvider extends ChangeNotifier {
 
         _items = rawList
             .whereType<Map<String, dynamic>>()
-            .map((e) => WishlistItem.fromJson(e))
+            .map((e) => EcomProductItem.fromJson(e))
             .toList();
 
-        debugPrint('WishlistProvider => Loaded ${_items.length} items');
+        debugPrint('EcomProductProvider => Loaded ${_items.length} items');
       } else {
         _errorMessage = 'Server error: ${response.statusCode}';
       }
     } catch (e) {
-      _errorMessage = 'Failed to load wishlist: $e';
-      debugPrint('WishlistProvider => Exception: $e');
+      _errorMessage = 'Failed to load products: $e';
+      debugPrint('EcomProductProvider => Exception: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

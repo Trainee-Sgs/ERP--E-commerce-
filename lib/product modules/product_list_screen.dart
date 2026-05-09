@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/app_drawer.dart';
-import '../widgets/app_bottom_nav_bar.dart';
+import 'package:erp_ecommerce/widgets/app_drawer.dart';
+import 'package:erp_ecommerce/widgets/app_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:erp_ecommerce/providers/product_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -14,7 +16,7 @@ class _ProductListScreenState extends State<ProductListScreen>
     with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
   bool _isFormVisible = false;
-  bool _isGridView = false;
+  bool _isGridView = true;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
 
@@ -42,6 +44,11 @@ class _ProductListScreenState extends State<ProductListScreen>
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch products when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().fetchProducts();
+    });
   }
 
   @override
@@ -158,12 +165,42 @@ class _ProductListScreenState extends State<ProductListScreen>
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-            itemCount: _products.length,
-            itemBuilder: (context, index) {
-              final p = _products[index];
-              return _buildProductCard(p);
+          child: Consumer<ProductProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchProducts(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.products.isEmpty) {
+                return _buildEmptyState();
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                itemCount: provider.products.length,
+                itemBuilder: (context, index) {
+                  final p = provider.products[index];
+                  return _buildProductCard(p);
+                },
+              );
             },
           ),
         ),
@@ -171,7 +208,7 @@ class _ProductListScreenState extends State<ProductListScreen>
     );
   }
 
-  Widget _buildProductCard(Map<String, String> p) {
+  Widget _buildProductCard(ProductItem p) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -188,29 +225,24 @@ class _ProductListScreenState extends State<ProductListScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── icon placeholder ──
+          // ── Product Image ──
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: Container(
               height: 120,
               width: double.infinity,
               color: const Color(0xFF26A69A).withOpacity(0.08),
-              child: Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF26A69A).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.inventory_2_outlined,
-                    size: 34,
-                    color: Color(0xFF26A69A),
-                  ),
-                ),
-              ),
+              child: p.productImage.isNotEmpty
+                  ? Image.network(
+                      p.productImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Center(
+                        child: Icon(Icons.inventory_2_outlined, size: 34, color: Color(0xFF26A69A)),
+                      ),
+                    )
+                  : const Center(
+                      child: Icon(Icons.inventory_2_outlined, size: 34, color: Color(0xFF26A69A)),
+                    ),
             ),
           ),
 
@@ -220,23 +252,26 @@ class _ProductListScreenState extends State<ProductListScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  p['productName']!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                Expanded(
+                  child: Text(
+                    p.productName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E293B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF26A69A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    p['productId']!,
+                    p.productId.isEmpty ? 'ID: ${p.id}' : p.productId,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -258,14 +293,9 @@ class _ProductListScreenState extends State<ProductListScreen>
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
             child: Column(
               children: [
-                _buildInfoRow(Icons.category_outlined,
-                    'Category', p['category']!),
-                _buildInfoRow(Icons.branding_watermark_outlined,
-                    'Brand', p['brand']!),
-                _buildInfoRow(Icons.description_outlined,
-                    'Description', p['description']!),
-                _buildInfoRow(Icons.factory_outlined,
-                    'Manufacture Info', p['manufactureInfo']!),
+                _buildInfoRow(Icons.category_outlined, 'Category', p.category.isEmpty ? 'General' : p.category),
+                _buildInfoRow(Icons.description_outlined, 'Description', p.productDescription.isEmpty ? 'No description available.' : p.productDescription),
+                _buildInfoRow(Icons.info_outline, 'Status', p.status.isEmpty ? 'Active' : p.status),
               ],
             ),
           ),
@@ -276,21 +306,11 @@ class _ProductListScreenState extends State<ProductListScreen>
             child: Row(
               children: [
                 Expanded(
-                  child: _buildPriceChip(
-                      'Base Price', p['basePrice']!,
-                      const Color(0xFF64748B)),
+                  child: _buildPriceChip('Price', '₹${p.productPrice}', const Color(0xFF26A69A)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildPriceChip(
-                      'Offer Price', p['offerPrice']!,
-                      const Color(0xFF26A69A)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildPriceChip(
-                      'GST / Tax', p['gstTax']!,
-                      const Color(0xFFF59E0B)),
+                  child: _buildPriceChip('Stock', p.productStock, const Color(0xFFF59E0B)),
                 ),
               ],
             ),

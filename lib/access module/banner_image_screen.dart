@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../providers/banner_provider.dart';
 
 class BannerImageScreen extends StatefulWidget {
   const BannerImageScreen({super.key});
@@ -12,8 +14,8 @@ class BannerImageScreen extends StatefulWidget {
 
 class _BannerImageScreenState extends State<BannerImageScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
-  bool _isGridView = false;
+  bool _isFormVisible = false;
+  bool _isGridView = true;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
 
@@ -33,6 +35,11 @@ class _BannerImageScreenState extends State<BannerImageScreen> with SingleTicker
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch banners when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BannerProvider>().fetchBanners();
+    });
   }
 
   @override
@@ -432,28 +439,125 @@ class _BannerImageScreenState extends State<BannerImageScreen> with SingleTicker
           ),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1,
-              childAspectRatio: 2.2,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: 4,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    color: Colors.grey[200],
-                    child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+          child: Consumer<BannerProvider>(
+            builder: (context, bannerProvider, child) {
+              if (bannerProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF00A79D)));
+              }
+
+              if (bannerProvider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(bannerProvider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => bannerProvider.fetchBanners(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
+                );
+              }
+
+              if (bannerProvider.banners.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.image_not_supported_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No banners found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 1,
+                  childAspectRatio: 1.8,
+                  mainAxisSpacing: 16,
                 ),
+                itemCount: bannerProvider.banners.length,
+                itemBuilder: (context, index) {
+                  final banner = bannerProvider.banners[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            child: Image.network(
+                              banner.imageUrl,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                child: const Center(child: Icon(Icons.image, color: Colors.grey, size: 48)),
+                              ),
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    banner.name.isEmpty ? 'Untitled Banner' : banner.name,
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  Text(
+                                    '${banner.startDate} to ${banner.endDate}',
+                                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (banner.status.toLowerCase() == 'active' ? Colors.green : Colors.orange).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  banner.status.isEmpty ? 'Pending' : banner.status,
+                                  style: TextStyle(
+                                    color: banner.status.toLowerCase() == 'active' ? Colors.green : Colors.orange,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),

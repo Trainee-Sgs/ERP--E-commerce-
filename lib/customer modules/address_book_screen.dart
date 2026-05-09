@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/address_provider.dart';
 
 class AddressBookScreen extends StatefulWidget {
   const AddressBookScreen({super.key});
@@ -26,6 +28,11 @@ class _AddressBookScreenState extends State<AddressBookScreen> with SingleTicker
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch addresses when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AddressProvider>().fetchAddresses();
+    });
   }
 
   @override
@@ -168,38 +175,102 @@ class _AddressBookScreenState extends State<AddressBookScreen> with SingleTicker
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: 6,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.home_outlined, color: Color(0xFF26A69A)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('John Doe - Home', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text('123 Main St, City, State, 12345', style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                        ],
+          child: Consumer<AddressProvider>(
+            builder: (context, addressProvider, child) {
+              if (addressProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (addressProvider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(addressProvider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => addressProvider.fetchAddresses(),
+                        child: const Text('Retry'),
                       ),
+                    ],
+                  ),
+                );
+              }
+
+              if (addressProvider.addresses.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.location_off_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No addresses found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: addressProvider.addresses.length,
+                itemBuilder: (context, index) {
+                  final address = addressProvider.addresses[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                     ),
-                    const Icon(Icons.more_vert, color: Colors.grey),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: address.isDefault ? const Color(0xFF26A69A).withOpacity(0.1) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            address.type.toLowerCase() == 'home' ? Icons.home_outlined : Icons.work_outline,
+                            color: const Color(0xFF26A69A),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    '${address.name} - ${address.type}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  if (address.isDefault) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4)),
+                                      child: Text('DEFAULT', style: TextStyle(color: Colors.green.shade700, fontSize: 8, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              Text(
+                                '${address.addressLine1}, ${address.addressLine2.isNotEmpty ? '${address.addressLine2}, ' : ''}${address.city}, ${address.state} - ${address.pincode}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.more_vert, color: Colors.grey),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),

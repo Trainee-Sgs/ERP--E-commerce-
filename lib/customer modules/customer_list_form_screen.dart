@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/customer_list_provider.dart';
 
 class CustomerListFormScreen extends StatefulWidget {
   const CustomerListFormScreen({super.key});
@@ -30,6 +32,11 @@ class _CustomerListFormScreenState extends State<CustomerListFormScreen> with Si
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch customers when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CustomerListProvider>().fetchCustomerList();
+    });
   }
 
   @override
@@ -191,38 +198,100 @@ class _CustomerListFormScreenState extends State<CustomerListFormScreen> with Si
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: 12,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      child: Text('C${index + 1}', style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Customer CID: CID-900${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Software: Enterprise ERP v2.0', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
+          child: Consumer<CustomerListProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchCustomerList(),
+                        child: const Text('Retry'),
                       ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.customers.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.people_outline, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No customers found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: provider.customers.length,
+                itemBuilder: (context, index) {
+                  final customer = provider.customers[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.grey),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          child: Text(
+                            customer.name.isNotEmpty ? customer.name[0].toUpperCase() : 'C',
+                            style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                customer.name.isEmpty ? 'Customer ID: ${customer.id}' : customer.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'Phone: ${customer.phone.isEmpty ? 'N/A' : customer.phone}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                              if (customer.status.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF26A69A).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    customer.status,
+                                    style: const TextStyle(color: Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),

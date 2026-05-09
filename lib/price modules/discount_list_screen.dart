@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/discount_provider.dart';
 
 class DiscountListScreen extends StatefulWidget {
   const DiscountListScreen({super.key});
@@ -31,6 +33,11 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch discounts when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DiscountProvider>().fetchDiscounts();
+    });
   }
 
   Future<void> _selectDate(BuildContext context, int type) async {
@@ -190,48 +197,122 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: 10,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+          child: Consumer<DiscountProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchDiscounts(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.discounts.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.local_offer_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No discounts found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.85,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                itemCount: provider.discounts.length,
+                itemBuilder: (context, index) {
+                  final item = provider.discounts[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            child: const Center(child: Icon(Icons.percent, color: Colors.orange)),
+                          ),
                         ),
-                        child: const Center(child: Icon(Icons.percent, color: Colors.orange)),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.discountId.isEmpty ? 'ID: ${item.id}' : 'Code: ${item.discountId}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                item.discountName,
+                                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    item.discountType == 'Percentage' ? '${item.discountValue}% OFF' : '₹${item.discountValue} OFF',
+                                    style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold),
+                                  ),
+                                  if (item.status.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: (item.status.toLowerCase() == 'active' ? Colors.green : Colors.grey).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        item.status,
+                                        style: TextStyle(
+                                          color: item.status.toLowerCase() == 'active' ? Colors.green : Colors.grey,
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Code: DISC-0${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text('Product Name ${index + 1}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          const Text('20% OFF', style: TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

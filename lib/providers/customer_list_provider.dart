@@ -3,42 +3,42 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../services/local_storage.dart';
 
-class WishlistItem {
+class CustomerListItem {
   final String id;
-  final String productId;
-  final String productName;
-  final String productImage;
-  final String price;
-  final String rating;
-  final String category;
-  final String addedDate;
+  final String name;
+  final String phone;
+  final String email;
+  final String address;
+  final String installDate;
+  final String renewalDate;
+  final String status;
 
-  WishlistItem({
+  CustomerListItem({
     required this.id,
-    required this.productId,
-    required this.productName,
-    required this.productImage,
-    required this.price,
-    required this.rating,
-    required this.category,
-    required this.addedDate,
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.address,
+    required this.installDate,
+    required this.renewalDate,
+    required this.status,
   });
 
-  factory WishlistItem.fromJson(Map<String, dynamic> json) {
-    return WishlistItem(
-      id:           json['id']?.toString()           ?? '',
-      productId:    json['product_id']?.toString()   ?? '',
-      productName:  json['product_name']?.toString() ?? '',
-      productImage: json['product_image']?.toString()?? '',
-      price:        json['price']?.toString()        ?? '0.00',
-      rating:       json['rating']?.toString()       ?? '0.0',
-      category:     json['category']?.toString()     ?? '',
-      addedDate:    json['added_date']?.toString()   ?? '',
+  factory CustomerListItem.fromJson(Map<String, dynamic> json) {
+    return CustomerListItem(
+      id:          json['id']?.toString()          ?? '',
+      name:        json['customer_name']?.toString()?? json['name']?.toString() ?? '',
+      phone:       json['phone_number']?.toString() ?? json['mobile']?.toString() ?? '',
+      email:       json['email']?.toString()       ?? '',
+      address:     json['address']?.toString()     ?? '',
+      installDate: json['install_date']?.toString() ?? '',
+      renewalDate: json['renewal_date']?.toString() ?? '',
+      status:      json['status']?.toString()      ?? '',
     );
   }
 }
 
-class WishlistProvider extends ChangeNotifier {
+class CustomerListProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://erpsmart.in/total/api/m_api/';
 
   bool   _isLoading    = false;
@@ -47,10 +47,10 @@ class WishlistProvider extends ChangeNotifier {
   bool   get isLoading    => _isLoading;
   String get errorMessage => _errorMessage;
 
-  List<WishlistItem> _items = [];
-  List<WishlistItem> get items => _items;
+  List<CustomerListItem> _customers = [];
+  List<CustomerListItem> get customers => _customers;
 
-  Future<void> fetchWishlist() async {
+  Future<void> fetchCustomerList() async {
     _isLoading    = true;
     _errorMessage = '';
     notifyListeners();
@@ -74,7 +74,7 @@ class WishlistProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty ? deviceId : '123',
           'uid':       uid.isNotEmpty      ? uid      : '123',
           'role_id':   roleId.isNotEmpty   ? roleId   : '123',
-          'form':      'sm_main_form_80530',
+          'form':      'sm_main_form_21701',
           'select':    '*',
         },
       );
@@ -83,14 +83,14 @@ class WishlistProvider extends ChangeNotifier {
         final decoded = json.decode(response.body);
 
         if (kDebugMode) {
-          debugPrint('WishlistProvider => Response: ${response.body}');
+          debugPrint('CustomerListProvider => Response: ${response.body}');
         }
 
         List<dynamic> rawList = [];
         if (decoded is List) {
           rawList = decoded;
         } else if (decoded is Map<String, dynamic>) {
-          for (final key in ['data', 'items', 'records', 'result', 'list']) {
+          for (final key in ['data', 'customers', 'records', 'result', 'list']) {
             if (decoded.containsKey(key) && decoded[key] is List) {
               rawList = decoded[key] as List<dynamic>;
               break;
@@ -106,18 +106,18 @@ class WishlistProvider extends ChangeNotifier {
           }
         }
 
-        _items = rawList
+        _customers = rawList
             .whereType<Map<String, dynamic>>()
-            .map((e) => WishlistItem.fromJson(e))
+            .map((e) => CustomerListItem.fromJson(e))
             .toList();
 
-        debugPrint('WishlistProvider => Loaded ${_items.length} items');
+        debugPrint('CustomerListProvider => Loaded ${_customers.length} customers');
       } else {
         _errorMessage = 'Server error: ${response.statusCode}';
       }
     } catch (e) {
-      _errorMessage = 'Failed to load wishlist: $e';
-      debugPrint('WishlistProvider => Exception: $e');
+      _errorMessage = 'Failed to load customers: $e';
+      debugPrint('CustomerListProvider => Exception: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

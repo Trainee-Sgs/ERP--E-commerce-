@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/price_provider.dart';
 
 class PriceListScreen extends StatefulWidget {
   const PriceListScreen({super.key});
@@ -28,6 +30,11 @@ class _PriceListScreenState extends State<PriceListScreen> with SingleTickerProv
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+
+    // Fetch prices when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PriceProvider>().fetchPrices();
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -185,48 +192,118 @@ class _PriceListScreenState extends State<PriceListScreen> with SingleTickerProv
           child: _buildSearchRow(),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: 10,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+          child: Consumer<PriceProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF26A69A)));
+              }
+
+              if (provider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => provider.fetchPrices(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (provider.prices.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.payments_outlined, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
+                      Text('No prices found', style: GoogleFonts.poppins(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.85,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                itemCount: provider.prices.length,
+                itemBuilder: (context, index) {
+                  final item = provider.prices[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            child: const Center(child: Icon(Icons.receipt_long_outlined, color: Color(0xFF26A69A))),
+                          ),
                         ),
-                        child: const Center(child: Icon(Icons.receipt_long_outlined, color: Colors.grey)),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.productId.isEmpty ? 'ID: ${item.id}' : 'Code: ${item.productId}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                item.productName,
+                                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '₹${item.salePrice}',
+                                    style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold),
+                                  ),
+                                  if (item.status.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF26A69A).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        item.status,
+                                        style: const TextStyle(color: Color(0xFF26A69A), fontSize: 8, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Code: PRD-0${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text('Product Name ${index + 1}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          const Text('₹1,999', style: TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),

@@ -72,4 +72,16 @@ class LocalStorage {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyDeviceId) ?? '';
   }
+
+  // ── Debug Log All ────────────────────────────────────────────────────────
+  static Future<void> debugLogAll() async {
+    if (!kDebugMode) return;
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    debugPrint('════════ Shared Preferences Debug Log ════════');
+    for (String key in keys) {
+      debugPrint('🔑 $key: ${prefs.get(key)}');
+    }
+    debugPrint('══════════════════════════════════════════════');
+  }
 }

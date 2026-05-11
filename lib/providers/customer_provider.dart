@@ -5,20 +5,32 @@ import '../services/local_storage.dart';
 
 class CustomerItem {
   final String id;
+  final String customerId;
+  final String firstName;
+  final String lastName;
   final String name;
   final String email;
   final String mobile;
+  final String alternativeMobile;
+  final String gender;
   final String profileImage;
+  final String registrationType;
   final String status;
   final String createdAt;
   final String updatedAt;
 
   CustomerItem({
     required this.id,
+    required this.customerId,
+    required this.firstName,
+    required this.lastName,
     required this.name,
     required this.email,
     required this.mobile,
+    required this.alternativeMobile,
+    required this.gender,
     required this.profileImage,
+    required this.registrationType,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -26,17 +38,24 @@ class CustomerItem {
 
   factory CustomerItem.fromJson(Map<String, dynamic> json) {
     return CustomerItem(
-      id:           json['id']?.toString()           ?? '',
-      name:         json['customer_name']?.toString() ?? json['name']?.toString() ?? '',
-      email:        json['email']?.toString()        ?? '',
-      mobile:       json['mobile_number']?.toString() ?? json['mobile']?.toString() ?? '',
-      profileImage: json['profile_image']?.toString() ?? '',
-      status:       json['status']?.toString()       ?? '',
-      createdAt:    json['created_at']?.toString()    ?? '',
-      updatedAt:    json['updated_at']?.toString()    ?? '',
+      id:                json['id']?.toString()                ?? '',
+      customerId:        json['customer_id']?.toString()        ?? '',
+      firstName:         json['customer_first_name']?.toString() ?? '',
+      lastName:          json['customer_last_name']?.toString()  ?? '',
+      name:              json['customer_name']?.toString()      ?? json['name']?.toString() ?? '',
+      email:             json['email']?.toString()             ?? '',
+      mobile:            json['mobile_number']?.toString()      ?? json['mobile']?.toString() ?? '',
+      alternativeMobile: json['alternative_mobile_number']?.toString() ?? '',
+      gender:            json['gender']?.toString()            ?? '',
+      profileImage:      json['profile_image']?.toString()      ?? '',
+      registrationType:  json['registration_type']?.toString()  ?? '',
+      status:            json['status']?.toString()            ?? '',
+      createdAt:         json['created_at']?.toString()         ?? '',
+      updatedAt:         json['updated_at']?.toString()         ?? '',
     );
   }
 }
+
 
 class CustomerProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://erpsmart.in/total/api/m_api/';

@@ -356,97 +356,103 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
   }
 
   Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Discount Details', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-          const SizedBox(height: 24),
-          _buildDatePickerField('Date', _entryDate, () => _selectDate(context, 1)),
-          _buildInputField('Product Name', 'Product Name'),
-          _buildInputField('Product Category', 'Product Category'),
-          _buildInputField('Discount Type', 'Discount Type'),
-          _buildInputField('Discount Value', 'Discount Value'),
-          _buildDatePickerField('Valid From', _validFrom, () => _selectDate(context, 2)),
-          _buildDatePickerField('Valid to', _validTo, () => _selectDate(context, 3)),
-          _buildInputField('Status', 'Status'),
-          _buildInputField('Remarks', 'Remarks'),
-          _buildInputField('Product Code', 'Product Code'),
-          const SizedBox(height: 100),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 16),
+          child: Text('Discount Details', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        ),
+        _buildDatePickerField('Date', _entryDate, () => _selectDate(context, 1)),
+        _buildInputField('Product Name', 'Product Name'),
+        _buildInputField('Product Category', 'Product Category'),
+        _buildInputField('Discount Type', 'Discount Type'),
+        _buildInputField('Discount Value', 'Discount Value'),
+        _buildDatePickerField('Valid From', _validFrom, () => _selectDate(context, 2)),
+        _buildDatePickerField('Valid to', _validTo, () => _selectDate(context, 3)),
+        _buildInputField('Status', 'Status'),
+        _buildInputField('Remarks', 'Remarks'),
+        _buildInputField('Product Code', 'Product Code'),
+        const SizedBox(height: 100),
+      ],
     );
   }
 
   Widget _buildDatePickerField(String label, DateTime? date, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date',
-                    style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13),
-                  ),
-                  const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
-                ],
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date',
+                      style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13),
+                    ),
+                    const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInputField(String label, String hint, {bool isDropdown = false, int maxLines = 1, IconData? suffix}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: TextField(
-              maxLines: maxLines,
-              readOnly: isDropdown || suffix != null,
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: InputBorder.none,
-                suffixIcon: isDropdown 
-                  ? const Icon(Icons.arrow_drop_down, color: Color(0xFF94A3B8))
-                  : (suffix != null ? Icon(suffix, color: const Color(0xFF94A3B8), size: 20) : null),
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: TextField(
+                maxLines: maxLines,
+                readOnly: isDropdown || suffix != null,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: InputBorder.none,
+                  suffixIcon: isDropdown 
+                    ? const Icon(Icons.arrow_drop_down, color: Color(0xFF94A3B8))
+                    : (suffix != null ? Icon(suffix, color: const Color(0xFF94A3B8), size: 20) : null),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

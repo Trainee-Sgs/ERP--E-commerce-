@@ -171,11 +171,28 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Customer Details',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          children: [
+            Text('Customer Details',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.white.withOpacity(0.5)),
+              ),
+              child: Text(
+                'NEW',
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
         
       ),
@@ -326,45 +343,79 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
                   final customer = provider.customers[index];
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: const Color(0xFFF1F5F9),
-                          backgroundImage: customer.profileImage.isNotEmpty ? NetworkImage(customer.profileImage) : null,
-                          child: customer.profileImage.isEmpty ? const Icon(Icons.person, color: Color(0xFF26A69A), size: 30) : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(customer.name.isEmpty ? 'Customer ID: ${customer.id}' : customer.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text(customer.mobile.isEmpty ? 'Mobile N/A' : customer.mobile, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                              if (customer.status.isNotEmpty)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF26A69A).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    customer.status,
-                                    style: const TextStyle(color: Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                            ],
+                    child: IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 100,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+                            ),
+                            child: Center(
+                              child: CircleAvatar(
+                                radius: 35,
+                                backgroundColor: Colors.white,
+                                backgroundImage: customer.profileImage.isNotEmpty ? NetworkImage(customer.profileImage) : null,
+                                child: customer.profileImage.isEmpty ? const Icon(Icons.person, color: Color(0xFF26A69A), size: 35) : null,
+                              ),
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                      ],
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          customer.name.isEmpty ? 'Customer ${index + 1}' : customer.name,
+                                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF1E293B)),
+                                        ),
+                                      ),
+                                      if (customer.status.isNotEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF26A69A).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            customer.status,
+                                            style: GoogleFonts.poppins(color: const Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildMiniInfo(Icons.tag, 'ID', customer.id),
+                                  _buildMiniInfo(Icons.badge_outlined, 'CUST ID', customer.customerId),
+                                  _buildMiniInfo(Icons.person_outline, 'FIRST NAME', customer.firstName),
+                                  _buildMiniInfo(Icons.person_outline, 'LAST NAME', customer.lastName),
+                                  _buildMiniInfo(Icons.email_outlined, 'EMAIL', customer.email.isEmpty ? "N/A" : customer.email),
+                                  _buildMiniInfo(Icons.phone_android, 'MOBILE', customer.mobile.isEmpty ? "N/A" : customer.mobile),
+                                  _buildMiniInfo(Icons.phone_android, 'ALT MOBILE', customer.alternativeMobile.isEmpty ? "N/A" : customer.alternativeMobile),
+                                  _buildMiniInfo(Icons.wc_outlined, 'GENDER', customer.gender),
+                                  _buildMiniInfo(Icons.app_registration, 'REG TYPE', customer.registrationType),
+                                  const SizedBox(height: 8),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 8),
+                                  _buildMiniInfo(Icons.calendar_today, 'CREATED', customer.createdAt),
+                                  _buildMiniInfo(Icons.update, 'UPDATED', customer.updatedAt),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -411,129 +462,148 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
   }
 
   Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Customer Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-          const SizedBox(height: 24),
-          _buildInputField('Customer Id', 'Customer Id'),
-          _buildInputField('Customer First Name', 'Customer First Name'),
-          _buildInputField('Customer Last Name', 'Customer Last Name'),
-          _buildInputField('Email', 'Email'),
-          _buildInputField('Mobile Number', 'Mobile Number'),
-          _buildInputField('Alternative Mobile Number', 'Alternative Mobile Number'),
-          _buildInputField('Gender', 'Gender'),
-          
-          _buildImageUploadField('Profile Image'),
-          
-          _buildInputField('Registration type', 'Registration type'),
-          _buildInputField('Status', 'Status'),
-          
-          _buildDatePickerField('Created at', _createdAt, () => _selectDate(context, true)),
-          _buildDatePickerField('Updated at', _updatedAt, () => _selectDate(context, false)),
-          
-          const SizedBox(height: 100),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Customer Information', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        const SizedBox(height: 24),
+        _buildInputCard('ID', 'ID', Icons.fingerprint),
+        _buildInputCard('Customer Id', 'Customer Id', Icons.badge_outlined),
+        _buildInputCard('Customer First Name', 'First Name', Icons.person_outline),
+        _buildInputCard('Customer Last Name', 'Last Name', Icons.person_outline),
+        _buildInputCard('Email', 'Email Address', Icons.email_outlined),
+        _buildInputCard('Mobile Number', 'Mobile Number', Icons.phone_android),
+        _buildInputCard('Alternative Mobile Number', 'Alt Mobile Number', Icons.phone_android),
+        _buildInputCard('Gender', 'Gender (Male/Female)', Icons.wc_outlined),
+        
+        _buildImageUploadCard('Profile Image'),
+        
+        _buildInputCard('Registration type', 'Registration type', Icons.app_registration),
+        _buildInputCard('Status', 'Status', Icons.info_outline),
+        
+        _buildDateCard('Created at', _createdAt, Icons.calendar_today, () => _selectDate(context, true)),
+        _buildDateCard('Updated at', _updatedAt, Icons.update, () => _selectDate(context, false)),
+        
+        const SizedBox(height: 120),
+      ],
     );
   }
 
-  Widget _buildInputField(String label, String hint) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: TextField(
+  Widget _buildInputCard(String label, String hint, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+            const SizedBox(height: 8),
+            TextField(
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                prefixIcon: Icon(icon, color: const Color(0xFF26A69A), size: 20),
+                hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 14),
                 border: InputBorder.none,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDatePickerField(String label, DateTime? date, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildDateCard(String label, DateTime? date, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+              const SizedBox(height: 12),
+              Row(
                 children: [
+                  Icon(icon, color: const Color(0xFF26A69A), size: 20),
+                  const SizedBox(width: 12),
                   Text(
                     date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date',
-                    style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13),
+                    style: GoogleFonts.poppins(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 14),
                   ),
-                  const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildImageUploadField(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _showImageSourceSheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildImageUploadCard(String label) {
+    return GestureDetector(
+      onTap: _showImageSourceSheet,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+              const SizedBox(height: 12),
+              Row(
                 children: [
+                  const Icon(Icons.add_a_photo_outlined, color: Color(0xFF26A69A), size: 20),
+                  const SizedBox(width: 12),
                   Text(
-                    _profileImageName ?? 'Profile Image',
-                    style: TextStyle(color: _profileImageName != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13),
+                    _profileImageName ?? 'Upload Profile Image',
+                    style: GoogleFonts.poppins(color: _profileImageName != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 14),
                   ),
-                  const Icon(Icons.add_a_photo_outlined, color: Color(0xFF94A3B8), size: 18),
                 ],
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniInfo(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF26A69A)),
+          const SizedBox(width: 8),
+          Text(
+            '$label:',
+            style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF26A69A), fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'N/A' : value,
+              style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

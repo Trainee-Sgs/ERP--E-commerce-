@@ -263,26 +263,44 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> with Single
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                order.customerName.isEmpty ? 'Order #${order.orderId}' : order.customerName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                order.orderNo.isNotEmpty ? 'Order #${order.orderNo}' : 'Order #${order.orderId}',
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF1E293B)),
                               ),
-                              Text(
-                                'Amount: ₹${order.amount} • Date: ${order.orderDate}',
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_outline, size: 12, color: Color(0xFF64748B)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Cust ID: ${order.customerId}',
+                                    style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.payment, size: 12, color: Color(0xFF64748B)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Amount: ₹${order.amount} • ${order.paymentStatus}',
+                                    style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 12),
+                                  ),
+                                ],
                               ),
                               if (order.status.isNotEmpty)
                                 Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: (order.status.toLowerCase() == 'delivered' ? Colors.green : Colors.orange).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: (order.status.toLowerCase() == 'delivered' || order.status.toLowerCase() == 'completed' ? Colors.green : Colors.orange).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    order.status,
-                                    style: TextStyle(
-                                      color: order.status.toLowerCase() == 'delivered' ? Colors.green : Colors.orange,
-                                      fontSize: 10,
+                                    order.status.toUpperCase(),
+                                    style: GoogleFonts.poppins(
+                                      color: order.status.toLowerCase() == 'delivered' || order.status.toLowerCase() == 'completed' ? Colors.green : Colors.orange,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -290,7 +308,17 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> with Single
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                            const Spacer(),
+                            Text(
+                              order.createdAt.split(' ').first,
+                              style: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 10),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );
@@ -338,97 +366,86 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> with Single
   }
 
   Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Customer Order Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-          const SizedBox(height: 24),
-          _buildInputField('Order Id', 'Order Id'),
-          _buildInputField('Customer id', 'Customer id'),
-          _buildInputField('Order no', 'Order no'),
-          
-          _buildDatePickerField('Order date', _orderDate, () => _selectDate(context, true)),
-          
-          _buildInputField('total amount', 'total amount'),
-          _buildInputField('Payment method', 'Payment method'),
-          _buildInputField('Payment Status', 'Payment Status'),
-          _buildInputField('Order Status', 'Order Status'),
-          _buildInputField('Shipping Address id', 'Shipping Address id'),
-          
-          _buildDatePickerField('Created at', _createdAt, () => _selectDate(context, false)),
-          
-          _buildInputField('Product_code', 'Product_code'),
-          const SizedBox(height: 100),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Customer Order Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        const SizedBox(height: 24),
+        _buildInputCard('Order Id', 'Order Id', Icons.tag),
+        _buildInputCard('Customer id', 'Customer id', Icons.person_outline),
+        _buildInputCard('Order no', 'Order no', Icons.numbers),
+        _buildDateCard('Order date', _orderDate, Icons.calendar_today, () => _selectDate(context, true)),
+        _buildInputCard('Total amount', 'Total amount', Icons.currency_rupee),
+        _buildInputCard('Payment method', 'Payment method', Icons.payment),
+        _buildInputCard('Payment Status', 'Payment Status', Icons.check_circle_outline),
+        _buildInputCard('Order Status', 'Order Status', Icons.info_outline),
+        _buildInputCard('Shipping Address id', 'Shipping Address id', Icons.location_on_outlined),
+        _buildDateCard('Created at', _createdAt, Icons.update, () => _selectDate(context, false)),
+        _buildInputCard('Product Code', 'Product Code', Icons.qr_code_2),
+        const SizedBox(height: 120),
+      ],
     );
   }
 
-  Widget _buildInputField(String label, String hint) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: TextField(
+  Widget _buildInputCard(String label, String hint, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+            const SizedBox(height: 8),
+            TextField(
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                prefixIcon: Icon(icon, color: const Color(0xFF26A69A), size: 20),
+                hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 14),
                 border: InputBorder.none,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDatePickerField(String label, DateTime? date, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildDateCard(String label, DateTime? date, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+              const SizedBox(height: 12),
+              Row(
                 children: [
+                  Icon(icon, color: const Color(0xFF26A69A), size: 20),
+                  const SizedBox(width: 12),
                   Text(
                     date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date',
-                    style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13),
+                    style: GoogleFonts.poppins(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 14),
                   ),
-                  const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

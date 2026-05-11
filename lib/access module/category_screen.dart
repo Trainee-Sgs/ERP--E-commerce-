@@ -143,7 +143,7 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Categories', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+        title: Text(_isFormVisible ? 'Category Form' : 'Category Grid View', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: Stack(
         children: [
@@ -267,7 +267,7 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.85,
+                  childAspectRatio: 0.65,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -281,44 +281,71 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                     ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: category.logoUrl.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      category.logoUrl,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.category, color: Color(0xFF26A69A), size: 40),
-                                    ),
-                                  )
-                                : const CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: Color(0xFFF1F5F9),
-                                    child: Icon(Icons.category, color: Color(0xFF26A69A), size: 30),
-                                  ),
+                          flex: 2,
+                          child: Container(
+                            width: double.infinity,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: category.logoUrl.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        category.logoUrl,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.category, color: Color(0xFF26A69A), size: 30),
+                                      ),
+                                    )
+                                  : const Icon(Icons.category, color: Color(0xFF26A69A), size: 30),
+                            ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-                          child: Column(
-                            children: [
-                              Text(
-                                category.name.isEmpty ? 'Category ${index + 1}' : category.name,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                category.brand.isEmpty ? 'Brand N/A' : category.brand,
-                                style: const TextStyle(color: Colors.grey, fontSize: 11),
-                              ),
-                            ],
+                        Expanded(
+                          flex: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  category.name.isEmpty ? 'Category ${index + 1}' : category.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF1E293B)),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Brand: ${category.brand.isEmpty ? 'N/A' : category.brand}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 11),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      _buildMiniInfo(Icons.qr_code, 'CODE: ${category.code.isEmpty ? "N/A" : category.code}'),
+                                      const SizedBox(height: 4),
+                                      _buildMiniInfo(Icons.tag, 'ID: ${category.id}'),
+                                      const SizedBox(height: 4),
+                                      _buildMiniInfo(Icons.calendar_today, 'DATE: ${category.entryDate.isEmpty ? "N/A" : category.entryDate}'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -354,93 +381,126 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
   }
 
   Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Category Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          _buildInputField('Category ID', 'Category ID'),
-          _buildInputField('Category Code', 'Category Code'),
-          _buildInputField('Brand', 'Brand'),
-          _buildImageUploadField('Category Logo'),
-          _buildDatePickerField('Entry Date', _entryDate, () => _selectDate(context)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 16),
+          child: Text('Category Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        ),
+        _buildInputField('Category ID', 'Category ID'),
+        _buildInputField('Category Code', 'Category Code'),
+        _buildInputField('Brand', 'Brand'),
+        _buildImageUploadField('Category Logo'),
+        _buildDatePickerField('Entry Date', _entryDate, () => _selectDate(context)),
+      ],
     );
   }
 
   Widget _buildInputField(String label, String hint) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-            child: TextField(decoration: InputDecoration(hintText: hint, border: InputBorder.none, hintStyle: const TextStyle(fontSize: 13))),
-          ),
-        ],
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+              child: TextField(decoration: InputDecoration(hintText: hint, border: InputBorder.none, hintStyle: const TextStyle(fontSize: 13))),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDatePickerField(String label, DateTime? date, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date', style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13)),
-                  const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
-                ],
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(date != null ? DateFormat('dd-MM-yyyy').format(date!) : 'Select Date', style: TextStyle(color: date != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13)),
+                    const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 18),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildImageUploadField(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _showImageSourceSheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_categoryImageName ?? 'Select Category Logo', style: TextStyle(color: _categoryImageName != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13)),
-                  const Icon(Icons.add_a_photo_outlined, color: Color(0xFF94A3B8), size: 18),
-                ],
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _showImageSourceSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_categoryImageName ?? 'Select Category Logo', style: TextStyle(color: _categoryImageName != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8), fontSize: 13)),
+                    const Icon(Icons.add_a_photo_outlined, color: Color(0xFF94A3B8), size: 18),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildMiniInfo(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 12, color: const Color(0xFF26A69A)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 

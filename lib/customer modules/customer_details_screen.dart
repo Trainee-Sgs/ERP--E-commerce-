@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/customer_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
 
 class CustomerDetailsScreen extends StatefulWidget {
   const CustomerDetailsScreen({super.key});
@@ -169,7 +170,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Row(
           children: [
@@ -428,36 +429,11 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
   }
 
   Widget _buildSearchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-            ),
-            child: const TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                hintText: 'Search customers...',
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-          ),
-          child: const Icon(Icons.tune, color: Color(0xFF64748B)),
-        ),
-      ],
+    return SearchFilterBar(
+      hintText: 'Search customers...',
+      onSearchChanged: (value) {
+        // Search logic here
+      },
     );
   }
 

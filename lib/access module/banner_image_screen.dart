@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/banner_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
 
 class BannerImageScreen extends StatefulWidget {
   const BannerImageScreen({super.key});
@@ -181,7 +182,7 @@ class _BannerImageScreenState extends State<BannerImageScreen> with SingleTicker
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text('Banner Image',
           style: GoogleFonts.poppins(
@@ -279,47 +280,21 @@ class _BannerImageScreenState extends State<BannerImageScreen> with SingleTicker
     );
   }
 
+  Widget _buildSearchRow() {
+    return SearchFilterBar(
+      hintText: 'Search active banners...',
+      onSearchChanged: (value) {
+        // Search logic here
+      },
+    );
+  }
+
   Widget _buildFormContent() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Search Bar Row
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-                    ],
-                  ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                      hintText: 'Search active banners...',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-                  ],
-                ),
-                child: const Icon(Icons.tune, color: Color(0xFF64748B)),
-              ),
-            ],
-          ),
+          _buildSearchRow(),
           const SizedBox(height: 24),
 
           // Promotion Details Card
@@ -416,27 +391,7 @@ class _BannerImageScreenState extends State<BannerImageScreen> with SingleTicker
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                  ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                      hintText: 'Search active banners...',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: _buildSearchRow(),
         ),
         Expanded(
           child: Consumer<BannerProvider>(

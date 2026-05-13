@@ -3,6 +3,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:erp_ecommerce/widgets/app_drawer.dart';
 import 'package:erp_ecommerce/widgets/app_bottom_nav_bar.dart';
+import '../access module/all_orders_screen.dart';
+import '../product modules/product_list_screen.dart';
+import '../customer modules/customer_list_form_screen.dart';
+import '../price modules/discount_list_screen.dart';
+import '../product modules/ecom_product_screen.dart';
+import '../customer modules/address_book_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -120,18 +126,30 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction('Orders\nMgmt', Icons.shopping_bag, Colors.redAccent),
-                      _buildQuickAction('Product\nCatelog', Icons.inventory_2, Colors.teal),
-                      _buildQuickAction('Customer\nMgmt', Icons.groups, Colors.deepPurple),
+                      _buildQuickAction('Orders\nMgmt', Icons.shopping_bag, Colors.redAccent, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AllOrdersScreen()));
+                      }),
+                      _buildQuickAction('Product\nCatelog', Icons.inventory_2, Colors.teal, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductListScreen()));
+                      }),
+                      _buildQuickAction('Customer\nMgmt', Icons.groups, Colors.deepPurple, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerListFormScreen()));
+                      }),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction('Marketing\n& Promos', Icons.trending_up, Colors.green),
-                      _buildQuickAction('Inventory\nMgmt', Icons.assignment, Colors.pink),
-                      _buildQuickAction('Shipping\n& Delivery', Icons.local_shipping, Colors.orange),
+                      _buildQuickAction('Marketing\n& Promos', Icons.trending_up, Colors.green, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const DiscountListScreen()));
+                      }),
+                      _buildQuickAction('Inventory\nMgmt', Icons.assignment, Colors.pink, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const EcomProductScreen()));
+                      }),
+                      _buildQuickAction('Shipping\n& Delivery', Icons.local_shipping, Colors.orange, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AddressBookScreen()));
+                      }),
                     ],
                   ),
                 ],
@@ -359,31 +377,34 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickAction(String label, IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+  Widget _buildQuickAction(String label, IconData icon, Color color, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          child: Icon(icon, color: Colors.white, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w500),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 

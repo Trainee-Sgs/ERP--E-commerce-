@@ -5,9 +5,13 @@ import '../services/local_storage.dart';
 
 class WishlistItem {
   final String id;
+  final String wishlistId;
+  final String customerId;
   final String productId;
   final String productName;
   final String productImage;
+  final String unitSize;
+  final String quantity;
   final String price;
   final String rating;
   final String category;
@@ -15,9 +19,13 @@ class WishlistItem {
 
   WishlistItem({
     required this.id,
+    required this.wishlistId,
+    required this.customerId,
     required this.productId,
     required this.productName,
     required this.productImage,
+    required this.unitSize,
+    required this.quantity,
     required this.price,
     required this.rating,
     required this.category,
@@ -26,14 +34,18 @@ class WishlistItem {
 
   factory WishlistItem.fromJson(Map<String, dynamic> json) {
     return WishlistItem(
-      id:           json['id']?.toString()           ?? '',
-      productId:    json['product_id']?.toString()   ?? '',
-      productName:  json['product_name']?.toString() ?? '',
-      productImage: json['product_image']?.toString()?? '',
-      price:        json['price']?.toString()        ?? '0.00',
-      rating:       json['rating']?.toString()       ?? '0.0',
-      category:     json['category']?.toString()     ?? '',
-      addedDate:    json['added_date']?.toString()   ?? '',
+      id:            json['id']?.toString()            ?? '',
+      wishlistId:    json['wishlist_id']?.toString()   ?? '',
+      customerId:    json['customer_id']?.toString()   ?? '',
+      productId:     json['product_id']?.toString()    ?? '',
+      productName:   json['product_name']?.toString()  ?? '',
+      productImage:  json['product_image']?.toString() ?? '',
+      unitSize:      json['unit_size']?.toString()     ?? '',
+      quantity:      json['quantity']?.toString()      ?? '0',
+      price:         json['price']?.toString()         ?? '0.00',
+      rating:        json['rating']?.toString()        ?? '0.0',
+      category:      json['category']?.toString()      ?? '',
+      addedDate:     json['added_date']?.toString()    ?? '',
     );
   }
 }

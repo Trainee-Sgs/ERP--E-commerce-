@@ -128,7 +128,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text('Documents', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
       ),

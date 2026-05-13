@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import '../access module/all_orders_screen.dart';
 import '../product modules/product_list_screen.dart';
-import '../customer modules/wishlist_screen.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -25,9 +24,6 @@ class AppBottomNavBar extends StatelessWidget {
         break;
       case 2:
         nextScreen = const ProductListScreen();
-        break;
-      case 3:
-        nextScreen = const WishlistScreen();
         break;
       default:
         nextScreen = const DashboardScreen();
@@ -84,11 +80,6 @@ class AppBottomNavBar extends StatelessWidget {
                 icon: Icon(Icons.inventory_2_outlined),
                 activeIcon: Icon(Icons.inventory_2),
                 label: 'Product',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_outline),
-                activeIcon: Icon(Icons.favorite),
-                label: 'Wishlist',
               ),
             ],
           ),

@@ -14,7 +14,6 @@ import '../customer modules/cart_abandonment_screen.dart';
 import '../customer modules/customer_list_form_screen.dart';
 import '../access module/document_upload_screen.dart';
 import '../access module/category_screen.dart';
-import 'dashboard_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -28,17 +27,6 @@ class AppDrawer extends StatelessWidget {
         children: [
           _buildDrawerHeader(context),
           const SizedBox(height: 10),
-          _buildDrawerItem(
-            icon: Icons.dashboard_outlined,
-            title: 'Dashboard',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const DashboardScreen()),
-              );
-            },
-          ),
           _buildDrawerItem(
             icon: Icons.inventory_2_outlined,
             title: 'Ecom Product List',

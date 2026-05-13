@@ -30,52 +30,37 @@ class _WishlistProductDetailScreenState
     final rating = widget.product['rating'] as double;
     final icon = widget.product['icon'] as IconData;
     // Derive a fake product code from the name
-    final productCode =
-        'ERP-${name.replaceAll(' ', '').substring(0, 4).toUpperCase()}-001';
+    final processedName = name.replaceAll(' ', '');
+    final prefix = processedName.length >= 4 
+        ? processedName.substring(0, 4) 
+        : processedName;
+    final productCode = 'ERP-${prefix.toUpperCase()}-001';
+    
+    final id         = widget.product['id']?.toString()         ?? '';
+    final wishlistId = widget.product['wishlist_id']?.toString() ?? '';
+    final customerId = widget.product['customer_id']?.toString() ?? '';
+    final productId  = widget.product['product_id']?.toString()  ?? '';
+    final unitSize   = widget.product['unit_size']?.toString()   ?? '';
+    final quantity   = widget.product['quantity']?.toString()   ?? '';
+    final addedDate  = widget.product['added_date']?.toString()  ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF26A69A),
+        backgroundColor: const Color(0xFF26A69A), // Teal Theme
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text(
-          name.toUpperCase(),
+          name,
           style: GoogleFonts.poppins(
             color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: Icon(
-                  _isWishlisted ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.white,
-                ),
-                onPressed: () => setState(() => _isWishlisted = !_isWishlisted),
-              ),
-              if (_isWishlisted)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
-                    child: const Text('3',
-                        style: TextStyle(color: Colors.white, fontSize: 9)),
-                  ),
-                ),
-            ],
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -84,211 +69,193 @@ class _WishlistProductDetailScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Product image hero ────────────────────────────────
+                  // ── Product image section ──────────────────────────────
                   Stack(
                     children: [
                       Container(
                         width: double.infinity,
-                        height: 280,
-                        color: const Color(0xFFF1F5F9),
+                        height: 320,
+                        color: Colors.white,
                         child: Center(
-                          child: Icon(icon, size: 140, color: color),
+                          child: Hero(
+                            tag: 'wishlist_$id',
+                            child: widget.product['image'] != null && widget.product['image'].toString().isNotEmpty
+                                ? Image.network(widget.product['image'], fit: BoxFit.contain)
+                                : Container(
+                                    padding: const EdgeInsets.all(40),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF26A69A).withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      category.toLowerCase().contains('phone') ? Icons.phone_iphone :
+                                      category.toLowerCase().contains('laptop') ? Icons.laptop :
+                                      category.toLowerCase().contains('audio') ? Icons.headphones :
+                                      Icons.devices,
+                                      size: 100,
+                                      color: const Color(0xFF26A69A),
+                                    ),
+                                  ),
+                          ),
                         ),
                       ),
-                      // Wishlist heart on image
                       Positioned(
                         right: 16,
-                        top: 16,
-                        child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _isWishlisted = !_isWishlisted),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 8)
-                              ],
-                            ),
-                            child: Icon(
-                              _isWishlisted
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: _isWishlisted ? Colors.red : Colors.grey,
-                              size: 22,
-                            ),
-                          ),
+                        top: 20,
+                        child: Column(
+                          children: [
+                            _circularIcon(Icons.favorite, Colors.red),
+                            const SizedBox(height: 16),
+                            _circularIcon(Icons.share_outlined, Colors.grey),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  // ── Dot indicators (carousel simulation) ─────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(3, (i) {
-                        final active = i == _selectedDot;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedDot = i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: active ? 22 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: active ? color : const Color(0xFFCBD5E1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        );
-                      }),
+                  const SizedBox(height: 10),
+                  // Indicator
+                  Center(
+                    child: Container(
+                      width: 30,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3F51B5),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
+                  const Divider(height: 40, thickness: 1, color: Color(0xFFEEEEEE)),
 
-                  // ── Product details ───────────────────────────────────
+                  // ── Details section ────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name
                         Text(
-                          name.toUpperCase(),
+                          name,
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Code: SMMPWL-001',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.poppins(color: Colors.black87),
+                            children: [
+                              const TextSpan(text: 'Price  ', style: TextStyle(fontSize: 16)),
+                              TextSpan(
+                                text: '₹$price',
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            ...List.generate(5, (i) => const Icon(Icons.star, color: Color(0xFFCDDC39), size: 24)),
+                            const SizedBox(width: 8),
+                            Text(
+                              '4.3 (128 reviews)',
+                              style: GoogleFonts.poppins(color: Colors.black54, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        // Status buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: const Color(0xFF4CAF50)),
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: const Color(0xFFE8F5E9),
+                                ),
+                                child: const Center(
+                                  child: Text('Tax: 5%', style: TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.w500)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: const Color(0xFF3F51B5)),
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: const Color(0xFFE8EAF6),
+                                ),
+                                child: const Center(
+                                  child: Text('Stock: 2', style: TextStyle(color: Color(0xFF3F51B5), fontWeight: FontWeight.w500)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        // Green Grid
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF26A69A), // Teal theme
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _gridItem(Icons.alt_route, 'Code', 'SMMPWL-001'),
+                              Container(height: 40, width: 1, color: Colors.white30),
+                              _gridItem(Icons.money, 'Price', '₹$price'),
+                              Container(height: 40, width: 1, color: Colors.white30),
+                              _gridItem(Icons.battery_charging_full, 'Stock', '2 units'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        
+                        // Detailed Specifications Table
+                        Text(
+                          'Product Specifications',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF1E293B),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        // Product code
-                        Text(
-                          'Product Code: $productCode',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF26A69A),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Category label
-                        Text(
-                          category.toUpperCase(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: const Color(0xFF94A3B8),
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Rating row
-                        Row(
-                          children: [
-                            ...List.generate(5, (i) {
-                              return Icon(
-                                i < rating.floor()
-                                    ? Icons.star_rounded
-                                    : (i < rating
-                                        ? Icons.star_half_rounded
-                                        : Icons.star_outline_rounded),
-                                color: const Color(0xFFF59E0B),
-                                size: 18,
-                              );
-                            }),
-                            const SizedBox(width: 6),
-                            Text(
-                              '$rating / 5.0',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: const Color(0xFF64748B)),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 16),
-                        // Color swatch (placeholder)
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.black26, width: 0.5),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.black12, width: 0.5),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E293B),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.black12, width: 0.5),
-                              ),
-                            ),
-                          ],
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildDetailTableRow('ID', id, true),
+                              _buildDetailTableRow('Wishlist ID', wishlistId, false),
+                              _buildDetailTableRow('Customer ID', customerId, true),
+                              _buildDetailTableRow('Product ID', productId, false),
+                              _buildDetailTableRow('Product Name', name, true),
+                              _buildDetailTableRow('Unit Size', unitSize, false),
+                              _buildDetailTableRow('Quantity', quantity, true),
+                              _buildDetailTableRow('Added Date', addedDate, false),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        // Quantity row
-                        Row(
-                          children: [
-                            Text(
-                              'Quantity:',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1E293B)),
-                            ),
-                            const SizedBox(width: 16),
-                            // Minus
-                            _quantityButton(
-                                icon: Icons.remove,
-                                onTap: _decrement,
-                                color: const Color(0xFF26A69A)),
-                            const SizedBox(width: 12),
-                            Text(
-                              '$_quantity',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF1E293B)),
-                            ),
-                            const SizedBox(width: 12),
-                            // Plus
-                            _quantityButton(
-                                icon: Icons.add,
-                                onTap: _increment,
-                                color: const Color(0xFF26A69A)),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Price info
-                        const Divider(color: Color(0xFFE2E8F0)),
-                        const SizedBox(height: 8),
-                        _priceRow('M.R.P.', price),
-                        const SizedBox(height: 6),
-                        _priceRow('Unit', 'Piece'),
-                        const SizedBox(height: 6),
-                        _priceRow('Price for', price),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   ),
@@ -296,105 +263,70 @@ class _WishlistProductDetailScreenState
               ),
             ),
           ),
-          // ── Bottom action buttons ─────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                )
-              ],
-            ),
-            child: Row(
-              children: [
-                // Put in Cart
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(
-                          color: Color(0xFF26A69A), width: 1.5),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                    ),
-                    child: Text(
-                      'Put in Cart',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: const Color(0xFF26A69A),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Buy Now
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: const Color(0xFF26A69A),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                      elevation: 4,
-                    ),
-                    child: Text(
-                      'Buy Now',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _quantityButton(
-      {required IconData icon,
-      required VoidCallback onTap,
-      required Color color}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        child: Icon(icon, color: Colors.white, size: 18),
+  Widget _circularIcon(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
+      child: Icon(icon, color: color, size: 24),
     );
   }
 
-  Widget _priceRow(String label, String value) {
-    return Row(
+  Widget _gridItem(IconData icon, String label, String value) {
+    return Column(
       children: [
-        Text(
-          '$label: ',
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.w500),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          child: Icon(icon, color: Colors.black87, size: 20),
         ),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: const Color(0xFF1E293B),
-              fontWeight: FontWeight.w600),
-        ),
+        const SizedBox(height: 12),
+        Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 11)),
       ],
+    );
+  }
+
+  Widget _buildDetailTableRow(String label, String value, bool isAlt) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isAlt ? const Color(0xFFF8FAFC) : Colors.white,
+        border: Border(bottom: BorderSide(color: const Color(0xFFF1F5F9), width: 1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'N/A' : value,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

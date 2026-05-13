@@ -29,6 +29,10 @@ class OrderItem {
   final String bankName;
   final String holderName;
   final String ifsc;
+  final String productCode;
+  final String orderNo;
+  final String customerId;
+  final String dtime;
 
   OrderItem({
     required this.id,
@@ -53,6 +57,10 @@ class OrderItem {
     this.bankName           = '',
     this.holderName         = '',
     this.ifsc               = '',
+    this.productCode        = '',
+    this.orderNo            = '',
+    this.customerId         = '',
+    this.dtime              = '',
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -61,7 +69,8 @@ class OrderItem {
       customer:         json['customer_name']?.toString()
                      ?? json['customer']?.toString()              ?? '',
       amount:           double.tryParse(
-                          json['total_price']?.toString() ?? '0') ?? 0.0,
+                          json['total_amount']?.toString() 
+                       ?? json['total_price']?.toString() ?? '0') ?? 0.0,
       status:           json['order_status']?.toString()
                      ?? json['status']?.toString()                ?? '',
       billingAddress:   json['billing_address']?.toString()       ?? '',
@@ -82,6 +91,10 @@ class OrderItem {
       bankName:       json['bank_name']?.toString()               ?? '',
       holderName:     json['holder_name']?.toString()             ?? '',
       ifsc:           json['ifsc']?.toString()                    ?? '',
+      productCode:    json['product_code']?.toString()            ?? '',
+      orderNo:        json['order_no']?.toString()                ?? '',
+      customerId:     json['customer_id']?.toString()             ?? '',
+      dtime:          json['dtime']?.toString()                   ?? '',
     );
   }
 }
@@ -142,7 +155,7 @@ class OrderProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty  ? deviceId : '123',
           'uid':       uid.isNotEmpty       ? uid      : '123',
           'role_id':   roleId.isNotEmpty    ? roleId   : '123',
-          'form':      'sm_main_form_-80520',
+          'form':      'sm_main_form_80520',
           'select':    '*',
         },
       );

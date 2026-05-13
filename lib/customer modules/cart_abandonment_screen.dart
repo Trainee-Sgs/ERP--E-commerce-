@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_abandonment_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
 
 class CartAbandonmentScreen extends StatefulWidget {
   const CartAbandonmentScreen({super.key});
@@ -164,7 +165,7 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text('Cart Abandonment',
           style: GoogleFonts.poppins(
@@ -274,7 +275,7 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: _buildSearchRow(),
         ),
         Expanded(
@@ -289,13 +290,20 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const Icon(Icons.error_outline, color: Colors.red, size: 64),
                       const SizedBox(height: 16),
-                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, 
+                        style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () => provider.fetchAbandonedCarts(),
-                        child: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF26A69A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                        child: Text('Retry Connection', style: GoogleFonts.poppins(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -307,80 +315,37 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.shopping_cart_outlined, color: Colors.grey, size: 48),
-                      const SizedBox(height: 16),
-                      Text('No abandoned carts found', style: GoogleFonts.poppins(color: Colors.grey)),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF26A69A).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A), size: 64),
+                      ),
+                      const SizedBox(height: 24),
+                      Text('No Abandoned Carts', 
+                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                      const SizedBox(height: 8),
+                      Text('All carts are currently active or completed', 
+                        style: GoogleFonts.poppins(color: Colors.grey[600])),
                     ],
                   ),
                 );
               }
 
-              return ListView.builder(
+              return GridView.builder(
                 padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
                 itemCount: provider.items.length,
                 itemBuilder: (context, index) {
                   final item = provider.items[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: item.productImage.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    item.productImage,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A)),
-                                  ),
-                                )
-                              : const Icon(Icons.shopping_cart_outlined, color: Color(0xFF26A69A)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.productName.isEmpty ? 'Cart #${item.cartNo}' : item.productName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                'Qty: ${item.quantity} • Added: ${item.addedAt}',
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
-                              ),
-                              if (item.status.isNotEmpty)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF26A69A).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    item.status,
-                                    style: const TextStyle(color: Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                      ],
-                    ),
-                  );
+                  return _buildAbandonedCartCard(item);
                 },
               );
             },
@@ -390,37 +355,160 @@ class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with Sing
     );
   }
 
-  Widget _buildSearchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+  Widget _buildAbandonedCartCard(CartAbandonmentItem item) {
+    // Dynamic Icon Logic for Electronics
+    IconData productIcon = Icons.shopping_bag_outlined;
+    final name = item.productName.toLowerCase();
+    if (name.contains('phone') || name.contains('mobile')) productIcon = Icons.phone_android_outlined;
+    else if (name.contains('laptop') || name.contains('computer')) productIcon = Icons.laptop_mac_outlined;
+    else if (name.contains('headphone') || name.contains('audio')) productIcon = Icons.headphones_outlined;
+    else if (name.contains('watch')) productIcon = Icons.watch_outlined;
+    else if (name.contains('camera')) productIcon = Icons.camera_alt_outlined;
+    else if (name.contains('tablet') || name.contains('ipad')) productIcon = Icons.tablet_mac_outlined;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image/Icon Header
+          Expanded(
+            flex: 3,
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Center(
+                    child: item.productImage.isNotEmpty
+                        ? Image.network(
+                            item.productImage,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(productIcon, size: 48, color: const Color(0xFF26A69A)),
+                          )
+                        : Icon(productIcon, size: 48, color: const Color(0xFF26A69A)),
+                  ),
+                ),
+                // Abandoned Badge
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'ABANDONED',
+                      style: GoogleFonts.poppins(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+                // Heart Icon (Red)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.favorite, size: 16, color: Colors.red),
+                  ),
+                ),
+              ],
             ),
-            child: const TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                hintText: 'Search abandoned carts...',
-                border: InputBorder.none,
+          ),
+          // Content
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.productName.isEmpty ? 'Untitled Product' : item.productName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'ID: ${item.productId}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildCompactTag(Icons.shopping_cart_outlined, 'Qty: ${item.quantity}'),
+                      _buildCompactTag(Icons.calendar_today_outlined, item.addedAt.split(' ')[0]),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactTag(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 10, color: const Color(0xFF26A69A)),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: GoogleFonts.poppins(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF475569),
           ),
-          child: const Icon(Icons.tune, color: Color(0xFF64748B)),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchRow() {
+    return SearchFilterBar(
+      hintText: 'Search abandoned carts...',
+      onSearchChanged: (value) {
+        // Search logic here
+      },
     );
   }
 

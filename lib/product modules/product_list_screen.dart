@@ -4,6 +4,8 @@ import 'package:erp_ecommerce/widgets/app_drawer.dart';
 import 'package:erp_ecommerce/widgets/app_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_ecommerce/providers/product_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
+import 'package:erp_ecommerce/widgets/dashboard_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -79,7 +81,13 @@ class _ProductListScreenState extends State<ProductListScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
+            }
+          },
         ),
         title: Text(
           'Product List',
@@ -162,7 +170,10 @@ class _ProductListScreenState extends State<ProductListScreen>
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _buildSearchRow(),
+          child: SearchFilterBar(
+            hintText: 'Search products...',
+            onSearchChanged: (value) {},
+          ),
         ),
         Expanded(
           child: Consumer<ProductProvider>(
@@ -394,7 +405,10 @@ class _ProductListScreenState extends State<ProductListScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildSearchRow(),
+          SearchFilterBar(
+            hintText: 'Search products...',
+            onSearchChanged: (value) {},
+          ),
           const SizedBox(height: 24),
           _buildFormCard(),
           const SizedBox(height: 32),
@@ -456,48 +470,6 @@ class _ProductListScreenState extends State<ProductListScreen>
   // ─────────────────────────────────────────────
   //  HELPERS
   // ─────────────────────────────────────────────
-  Widget _buildSearchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10)
-              ],
-            ),
-            child: const TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                hintText: 'Search products...',
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10)
-            ],
-          ),
-          child:
-              const Icon(Icons.tune, color: Color(0xFF64748B)),
-        ),
-      ],
-    );
-  }
 
   Widget _buildFormCard() {
     return Container(

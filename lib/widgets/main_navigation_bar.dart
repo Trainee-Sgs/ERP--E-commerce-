@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import '../access module/all_orders_screen.dart';
 import '../product modules/product_list_screen.dart';
-import '../customer modules/wishlist_screen.dart';
 import 'app_drawer.dart';
 
 class MainNavScreen extends StatefulWidget {
@@ -19,7 +18,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
     const DashboardScreen(),
     const AllOrdersScreen(),
     const ProductListScreen(),
-    const WishlistScreen(),
   ];
 
   @override
@@ -68,11 +66,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   icon: Icon(Icons.inventory_2_outlined),
                   activeIcon: Icon(Icons.inventory_2),
                   label: 'Product',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite_outline),
-                  activeIcon: Icon(Icons.favorite),
-                  label: 'Wishlist',
                 ),
               ],
             ),

@@ -6,6 +6,7 @@ import '../widgets/app_drawer.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/category_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -141,7 +142,7 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text(_isFormVisible ? 'Category Form' : 'Category Grid View', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
@@ -361,22 +362,11 @@ class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProvid
   }
 
   Widget _buildSearchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-            child: const TextField(decoration: InputDecoration(icon: Icon(Icons.search, color: Color(0xFF2563EB)), hintText: 'Search categories...', border: InputBorder.none)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-          child: const Icon(Icons.tune, color: Color(0xFF64748B)),
-        ),
-      ],
+    return SearchFilterBar(
+      hintText: 'Search categories...',
+      onSearchChanged: (value) {
+        // Search logic here
+      },
     );
   }
 

@@ -34,8 +34,8 @@ class CartAbandonmentItem {
       productId:    json['product_id']?.toString()   ?? '',
       productName:  json['product_name']?.toString() ?? '',
       productImage: json['product_image']?.toString()?? '',
-      quantity:     json['quantity']?.toString()     ?? '',
-      addedAt:      json['added_at']?.toString()     ?? '',
+      quantity:     (json['quantity'] ?? json['qty'])?.toString()     ?? '1',
+      addedAt:      (json['added_at'] ?? json['dtime'] ?? json['created_at'])?.toString()     ?? '',
       status:       json['status']?.toString()       ?? '',
     );
   }
@@ -77,7 +77,7 @@ class CartAbandonmentProvider extends ChangeNotifier {
           'device_id': deviceId.isNotEmpty ? deviceId : '123',
           'uid':       uid.isNotEmpty      ? uid      : '123',
           'role_id':   roleId.isNotEmpty   ? roleId   : '123',
-          'form':      'sm_main_form_-80540',
+          'form':      'sm_main_form_80540',
           'select':    '*',
         },
       );

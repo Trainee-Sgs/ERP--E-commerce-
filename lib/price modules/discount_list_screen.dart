@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/discount_provider.dart';
+import 'package:erp_ecommerce/widgets/search_filter_bar.dart';
 
 class DiscountListScreen extends StatefulWidget {
   const DiscountListScreen({super.key});
@@ -82,7 +83,7 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () { if (Navigator.canPop(context)) { Navigator.pop(context); } },
         ),
         title: Text('Discount List',
           style: GoogleFonts.poppins(
@@ -322,36 +323,11 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
   }
 
   Widget _buildSearchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-            ),
-            child: const TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.search, color: Color(0xFF2563EB)),
-                hintText: 'Search discounts...',
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-          ),
-          child: const Icon(Icons.tune, color: Color(0xFF64748B)),
-        ),
-      ],
+    return SearchFilterBar(
+      hintText: 'Search discounts...',
+      onSearchChanged: (value) {
+        // Search logic here
+      },
     );
   }
 

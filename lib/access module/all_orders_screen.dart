@@ -94,9 +94,9 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
   Widget _buildStatusFilterRow() {
     return Consumer<OrderProvider>(
       builder: (context, provider, child) {
-        final pendingCount   = provider.orders.where((o) => o.status.toLowerCase() == 'pending' || o.status.toLowerCase() == 'progress').length;
+        final pendingCount   = provider.orders.where((o) {final s = o.status.toLowerCase(); return s == 'pending' || s == 'progress' || s == '';}).length;
         final confirmedCount = provider.orders.where((o) => o.status.toLowerCase() == 'confirmed').length;
-        final shippedCount   = provider.orders.where((o) => o.status.toLowerCase() == 'shipped').length;
+        final shippingCount  = provider.orders.where((o) {final s = o.status.toLowerCase(); return s == 'shipping' || s == 'shipped';}).length;
         final deliveredCount = provider.orders.where((o) => o.status.toLowerCase() == 'delivered').length;
 
         return SingleChildScrollView(
@@ -110,7 +110,7 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
               const SizedBox(width: 12),
               _buildStatusChip('Confirmed', confirmedCount, Colors.blue, _selectedStatus == 'Confirmed'),
               const SizedBox(width: 12),
-              _buildStatusChip('Shipped', shippedCount, Colors.purple, _selectedStatus == 'Shipped'),
+              _buildStatusChip('Shipping', shippingCount, Colors.purple, _selectedStatus == 'Shipping'),
               const SizedBox(width: 12),
               _buildStatusChip('Delivered', deliveredCount, Colors.green, _selectedStatus == 'Delivered'),
             ],
@@ -299,22 +299,6 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
     );
   }
 
-  Widget _buildActionButton(String label, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 14),
-            const SizedBox(width: 4),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildGridViewContent() {
     return Column(
@@ -330,123 +314,243 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
                 ? orderProvider.orders 
                 : orderProvider.orders.where((o) {
                     final s = o.status.toLowerCase();
-                    if (_selectedStatus == 'Pending') return s == 'pending' || s == 'progress';
+                    if (_selectedStatus == 'Pending') return s == 'pending' || s == 'progress' || s == '';
+                    if (_selectedStatus == 'Shipping') return s == 'shipping' || s == 'shipped';
                     return s == _selectedStatus.toLowerCase();
                   }).toList();
 
               if (orderProvider.errorMessage.isNotEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(orderProvider.errorMessage, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => orderProvider.fetchOrders(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildErrorView(orderProvider.errorMessage, () => orderProvider.fetchOrders());
               }
 
               if (filteredOrders.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.shopping_bag_outlined, color: Colors.grey, size: 48),
-                      const SizedBox(height: 16),
-                      Text(_selectedStatus == 'All' ? 'No orders found' : 'No $_selectedStatus orders', 
-                        style: GoogleFonts.poppins(color: Colors.grey)),
-                    ],
-                  ),
-                );
+                return _buildEmptyView();
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
                 itemCount: filteredOrders.length,
                 itemBuilder: (context, index) {
                   final order = filteredOrders[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Text('Order #${order.id}', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(order.productCode, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[700])),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(order.status).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                order.status.isEmpty ? 'Pending' : order.status.toUpperCase(),
-                                style: TextStyle(
-                                  color: _getStatusColor(order.status),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildCardItem('Customer ID', order.customerId.isEmpty ? 'N/A' : order.customerId),
-                            ),
-                            Expanded(
-                              child: _buildCardItem('Total Amount', '₹${order.amount.toStringAsFixed(2)}', valueColor: const Color(0xFF26A69A)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildCardItem('Date & Time', order.dtime.isEmpty ? 'N/A' : order.dtime),
-                            ),
-                            Expanded(
-                              child: _buildCardItem('Payment Status', order.paymentStatus.toUpperCase(), valueColor: order.paymentStatus.toLowerCase() == 'upi' ? Colors.blue : Colors.orange),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
+                  return _buildOrderCard(order);
                 },
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOrderCard(OrderItem order) {
+    final statusColor = _getStatusColor(order.status);
+    final status = order.status.isEmpty ? 'Pending' : order.status;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header Section
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('Order #${order.id}', 
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF1E293B))),
+                        const SizedBox(width: 8),
+                        if (order.productCode.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(order.productCode, 
+                              style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(order.dtime.isNotEmpty ? order.dtime : 'No date provided', 
+                      style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF94A3B8))),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          
+          // Details Section
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                _buildOrderInfo('Customer UID', order.customerId.isEmpty ? 'N/A' : order.customerId, Icons.person_outline),
+                const Spacer(),
+                _buildOrderInfo('Amount', '₹${order.amount.toStringAsFixed(2)}', Icons.payments_outlined, isPrimary: true),
+              ],
+            ),
+          ),
+
+          // Flow Actions Section (The "CRT functioning" part)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _buildFlowActions(order),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderInfo(String label, String value, IconData icon, {bool isPrimary = false}) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.w500)),
+            Text(value, 
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold, 
+                fontSize: 13, 
+                color: isPrimary ? const Color(0xFF26A69A) : const Color(0xFF1E293B)
+              )
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlowActions(OrderItem order) {
+    final status = order.status.toLowerCase();
+    
+    // Define the flow: Pending -> Confirmed -> Shipped -> Delivered
+    if (status == 'pending' || status == 'progress' || status == '') {
+      return _buildActionButton('Confirm Order', Icons.check_circle_outline, Colors.blue, () {
+        context.read<OrderProvider>().updateOrderStatus(order.id, 'Confirmed');
+      });
+    } else if (status == 'confirmed') {
+      return _buildActionButton('Dispatch / Ship', Icons.local_shipping_outlined, Colors.purple, () {
+        context.read<OrderProvider>().updateOrderStatus(order.id, 'Shipped');
+      });
+    } else if (status == 'shipped') {
+      return _buildActionButton('Mark Delivered', Icons.task_alt, Colors.green, () {
+        context.read<OrderProvider>().updateOrderStatus(order.id, 'Delivered');
+      });
+    } else if (status == 'delivered') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.verified, color: Colors.green, size: 16),
+            const SizedBox(width: 8),
+            Text('ORDER COMPLETED', style: GoogleFonts.poppins(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+          ],
+        ),
+      );
+    }
+    
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18, color: Colors.white),
+        label: Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(String message, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 64),
+          const SizedBox(height: 16),
+          Text(message, style: GoogleFonts.poppins(color: Colors.red)),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry Connection')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(color: const Color(0xFF26A69A).withOpacity(0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF26A69A), size: 64),
+          ),
+          const SizedBox(height: 24),
+          Text('No Orders Found', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text('No $_selectedStatus orders in this category', style: GoogleFonts.poppins(color: Colors.grey)),
+        ],
+      ),
     );
   }
 

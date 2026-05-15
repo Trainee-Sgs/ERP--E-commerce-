@@ -17,7 +17,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   String? _categoryImageName;
   DateTime? _entryDate;
   final ImagePicker _picker = ImagePicker();

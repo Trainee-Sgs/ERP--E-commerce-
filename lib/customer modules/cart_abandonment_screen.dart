@@ -15,7 +15,7 @@ class CartAbandonmentScreen extends StatefulWidget {
 
 class _CartAbandonmentScreenState extends State<CartAbandonmentScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   bool _isGridView = false;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;

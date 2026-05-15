@@ -15,8 +15,8 @@ class CustomerDetailsScreen extends StatefulWidget {
 
 class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
-  bool _isGridView = false;
+  bool _isFormVisible = false;
+  bool _isGridView = true;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
 
@@ -24,6 +24,56 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
   DateTime? _updatedAt;
   String? _profileImageName;
   final ImagePicker _picker = ImagePicker();
+
+  // Controllers for form fields
+  final TextEditingController _idController        = TextEditingController();
+  final TextEditingController _custIdController    = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController  = TextEditingController();
+  final TextEditingController _emailController     = TextEditingController();
+  final TextEditingController _mobileController    = TextEditingController();
+  final TextEditingController _altMobileController = TextEditingController();
+  final TextEditingController _genderController    = TextEditingController();
+  final TextEditingController _regTypeController   = TextEditingController();
+  final TextEditingController _statusController    = TextEditingController();
+
+  void _loadCustomerData(CustomerItem customer) {
+    setState(() {
+      _idController.text        = customer.id;
+      _custIdController.text    = customer.customerId;
+      _firstNameController.text = customer.firstName;
+      _lastNameController.text  = customer.lastName;
+      _emailController.text     = customer.email;
+      _mobileController.text    = customer.mobile;
+      _altMobileController.text = customer.alternativeMobile;
+      _genderController.text    = customer.gender;
+      _regTypeController.text   = customer.registrationType;
+      _statusController.text    = customer.status;
+      
+      _profileImageName = customer.profileImage.isNotEmpty ? 'Profile Image Loaded' : null;
+      
+      // Basic date parsing (assuming format or leaving null if empty)
+      try {
+        if (customer.createdAt.isNotEmpty) _createdAt = DateFormat('yyyy-MM-dd').parse(customer.createdAt.split(' ')[0]);
+        if (customer.updatedAt.isNotEmpty) _updatedAt = DateFormat('yyyy-MM-dd').parse(customer.updatedAt.split(' ')[0]);
+      } catch (_) {}
+
+      _isFormVisible = true;
+      _isGridView    = false;
+    });
+  }
+
+  final Set<String> _expandedCustomerIds = {};
+
+  void _toggleExpand(String id) {
+    setState(() {
+      if (_expandedCustomerIds.contains(id)) {
+        _expandedCustomerIds.remove(id);
+      } else {
+        _expandedCustomerIds.add(id);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -296,7 +346,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: _buildSearchRow(),
         ),
         Expanded(
@@ -307,124 +357,266 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
               }
 
               if (provider.errorMessage.isNotEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => provider.fetchCustomers(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildErrorView(provider.errorMessage, () => provider.fetchCustomers());
               }
 
               if (provider.customers.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.people_outline, color: Colors.grey, size: 48),
-                      const SizedBox(height: 16),
-                      Text('No customers found', style: GoogleFonts.poppins(color: Colors.grey)),
-                    ],
-                  ),
-                );
+                return _buildEmptyView();
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                 itemCount: provider.customers.length,
                 itemBuilder: (context, index) {
                   final customer = provider.customers[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                    ),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 100,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
-                            ),
-                            child: Center(
-                              child: CircleAvatar(
-                                radius: 35,
-                                backgroundColor: Colors.white,
-                                backgroundImage: customer.profileImage.isNotEmpty ? NetworkImage(customer.profileImage) : null,
-                                child: customer.profileImage.isEmpty ? const Icon(Icons.person, color: Color(0xFF26A69A), size: 35) : null,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          customer.name.isEmpty ? 'Customer ${index + 1}' : customer.name,
-                                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF1E293B)),
-                                        ),
-                                      ),
-                                      if (customer.status.isNotEmpty)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF26A69A).withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            customer.status,
-                                            style: GoogleFonts.poppins(color: const Color(0xFF26A69A), fontSize: 10, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildMiniInfo(Icons.tag, 'ID', customer.id),
-                                  _buildMiniInfo(Icons.badge_outlined, 'CUST ID', customer.customerId),
-                                  _buildMiniInfo(Icons.person_outline, 'FIRST NAME', customer.firstName),
-                                  _buildMiniInfo(Icons.person_outline, 'LAST NAME', customer.lastName),
-                                  _buildMiniInfo(Icons.email_outlined, 'EMAIL', customer.email.isEmpty ? "N/A" : customer.email),
-                                  _buildMiniInfo(Icons.phone_android, 'MOBILE', customer.mobile.isEmpty ? "N/A" : customer.mobile),
-                                  _buildMiniInfo(Icons.phone_android, 'ALT MOBILE', customer.alternativeMobile.isEmpty ? "N/A" : customer.alternativeMobile),
-                                  _buildMiniInfo(Icons.wc_outlined, 'GENDER', customer.gender),
-                                  _buildMiniInfo(Icons.app_registration, 'REG TYPE', customer.registrationType),
-                                  const SizedBox(height: 8),
-                                  const Divider(height: 1),
-                                  const SizedBox(height: 8),
-                                  _buildMiniInfo(Icons.calendar_today, 'CREATED', customer.createdAt),
-                                  _buildMiniInfo(Icons.update, 'UPDATED', customer.updatedAt),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return _buildPremiumCustomerCard(customer);
                 },
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPremiumCustomerCard(CustomerItem customer) {
+    final bool isExpanded = _expandedCustomerIds.contains(customer.id);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Profile & Header Section
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF26A69A).withOpacity(0.2), width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    backgroundImage: customer.profileImage.isNotEmpty ? NetworkImage(customer.profileImage) : null,
+                    child: customer.profileImage.isEmpty 
+                      ? const Icon(Icons.person_outline, color: Color(0xFF26A69A), size: 30)
+                      : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              customer.name.isEmpty ? '${customer.firstName} ${customer.lastName}' : customer.name,
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF1E293B)),
+                            ),
+                          ),
+                          _buildStatusBadge(customer.status),
+                        ],
+                      ),
+                      Text(
+                        'UID: ${customer.customerId}',
+                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          
+          // Basic Contact Information Section
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildInfoRow(Icons.email_outlined, customer.email.isEmpty ? "No Email" : customer.email),
+                const SizedBox(height: 10),
+                _buildInfoRow(Icons.phone_android, customer.mobile.isEmpty ? "No Mobile" : customer.mobile),
+              ],
+            ),
+          ),
+
+          // --- Expanded Detailed Information Card ---
+          if (isExpanded)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9).withOpacity(0.5),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildInfoRow(Icons.wc_outlined, 'Gender: ${customer.gender}')),
+                      Expanded(child: _buildInfoRow(Icons.app_registration, 'Type: ${customer.registrationType}')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.phone_android, 'Alt Mobile: ${customer.alternativeMobile.isEmpty ? 'N/A' : customer.alternativeMobile}'),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.tag, 'System ID: ${customer.id}'),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildInfoRow(Icons.calendar_today, 'Created: ${customer.createdAt}')),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _buildInfoRow(Icons.update, 'Updated: ${customer.updatedAt}')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          
+          // Action Buttons Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            child: Row(
+              children: [
+                _buildQuickAction(Icons.call, 'Call', Colors.green, () {}),
+                const SizedBox(width: 12),
+                _buildQuickAction(Icons.mail_outline, 'Email', Colors.blue, () {}),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => _toggleExpand(customer.id),
+                  child: Row(
+                    children: [
+                      Text(
+                        isExpanded ? 'Show Less' : 'View Full Profile', 
+                        style: GoogleFonts.poppins(color: const Color(0xFF26A69A), fontSize: 12, fontWeight: FontWeight.bold)
+                      ),
+                      Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 16, color: const Color(0xFF26A69A)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final bool isActive = status.toLowerCase() == 'active';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: (isActive ? Colors.green : Colors.orange).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: GoogleFonts.poppins(
+          color: isActive ? Colors.green : Colors.orange,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF475569), fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(label, style: GoogleFonts.poppins(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(String message, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 64),
+          const SizedBox(height: 16),
+          Text(message, style: GoogleFonts.poppins(color: Colors.red), textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(color: const Color(0xFF26A69A).withOpacity(0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.people_outline, color: Color(0xFF26A69A), size: 64),
+          ),
+          const SizedBox(height: 24),
+          Text('No Customers Found', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 
@@ -443,19 +635,19 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
       children: [
         Text('Customer Information', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
         const SizedBox(height: 24),
-        _buildInputCard('ID', 'ID', Icons.fingerprint),
-        _buildInputCard('Customer Id', 'Customer Id', Icons.badge_outlined),
-        _buildInputCard('Customer First Name', 'First Name', Icons.person_outline),
-        _buildInputCard('Customer Last Name', 'Last Name', Icons.person_outline),
-        _buildInputCard('Email', 'Email Address', Icons.email_outlined),
-        _buildInputCard('Mobile Number', 'Mobile Number', Icons.phone_android),
-        _buildInputCard('Alternative Mobile Number', 'Alt Mobile Number', Icons.phone_android),
-        _buildInputCard('Gender', 'Gender (Male/Female)', Icons.wc_outlined),
+        _buildInputCard('ID', 'ID', Icons.fingerprint, _idController),
+        _buildInputCard('Customer Id', 'Customer Id', Icons.badge_outlined, _custIdController),
+        _buildInputCard('Customer First Name', 'First Name', Icons.person_outline, _firstNameController),
+        _buildInputCard('Customer Last Name', 'Last Name', Icons.person_outline, _lastNameController),
+        _buildInputCard('Email', 'Email Address', Icons.email_outlined, _emailController),
+        _buildInputCard('Mobile Number', 'Mobile Number', Icons.phone_android, _mobileController),
+        _buildInputCard('Alternative Mobile Number', 'Alt Mobile Number', Icons.phone_android, _altMobileController),
+        _buildInputCard('Gender', 'Gender (Male/Female)', Icons.wc_outlined, _genderController),
         
         _buildImageUploadCard('Profile Image'),
         
-        _buildInputCard('Registration type', 'Registration type', Icons.app_registration),
-        _buildInputCard('Status', 'Status', Icons.info_outline),
+        _buildInputCard('Registration type', 'Registration type', Icons.app_registration, _regTypeController),
+        _buildInputCard('Status', 'Status', Icons.info_outline, _statusController),
         
         _buildDateCard('Created at', _createdAt, Icons.calendar_today, () => _selectDate(context, true)),
         _buildDateCard('Updated at', _updatedAt, Icons.update, () => _selectDate(context, false)),
@@ -465,7 +657,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
     );
   }
 
-  Widget _buildInputCard(String label, String hint, IconData icon) {
+  Widget _buildInputCard(String label, String hint, IconData icon, TextEditingController controller) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -481,6 +673,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with Sing
             Text(label, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
             const SizedBox(height: 8),
             TextField(
+              controller: controller,
               decoration: InputDecoration(
                 hintText: hint,
                 prefixIcon: Icon(icon, color: const Color(0xFF26A69A), size: 20),

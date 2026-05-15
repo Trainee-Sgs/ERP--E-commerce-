@@ -118,6 +118,11 @@ class DocumentProvider extends ChangeNotifier {
     }
   }
 
+  void addLocalDocument(DocumentItem doc) {
+    _documents.insert(0, doc);
+    notifyListeners();
+  }
+
   void uploadDocument() async {
     _isLoading = true;
     notifyListeners();

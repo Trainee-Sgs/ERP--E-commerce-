@@ -32,11 +32,11 @@ class CustomerOrderItem {
       orderId:       json['order_id']?.toString()       ?? '',
       orderNo:       json['order_no']?.toString()       ?? '',
       customerId:    json['customer_id']?.toString()    ?? '',
-      amount:        json['total_amount']?.toString()   ?? '0.00',
-      status:        json['order_status']?.toString()   ?? '',
+      amount:        (json['total_amount'] ?? json['amount'] ?? json['net_amount'])?.toString()   ?? '0.00',
+      status:        (json['order_status'] ?? json['status'] ?? json['current_status'])?.toString()   ?? '',
       paymentStatus: json['payment_status']?.toString() ?? '',
       orderDate:     json['order_date']?.toString()     ?? '',
-      createdAt:     json['dtime']?.toString()          ?? json['created_at']?.toString() ?? '',
+      createdAt:     (json['dtime'] ?? json['created_at'] ?? json['order_date'])?.toString() ?? '',
     );
   }
 }
@@ -68,10 +68,12 @@ class CustomerOrderProvider extends ChangeNotifier {
 
       final body = {
         'type':      '2083',
-        'cid':       cid.isNotEmpty ? cid : '99994444',
-        'lt':        lat.isNotEmpty ? lat : '123',
-        'ln':        lng.isNotEmpty ? lng : '123',
+        'cid':       cid.isNotEmpty      ? cid      : '99994444',
+        'lt':        lat.isNotEmpty      ? lat      : '123',
+        'ln':        lng.isNotEmpty      ? lng      : '123',
         'device_id': deviceId.isNotEmpty ? deviceId : '123',
+        'uid':       uid.isNotEmpty      ? uid      : '123',
+        'role_id':   roleId.isNotEmpty   ? roleId   : '123',
         'form':      'sm_main_form_80520',
         'select':    '*',
       };

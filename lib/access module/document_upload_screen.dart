@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_bottom_nav_bar.dart';
@@ -15,12 +17,16 @@ class DocumentUploadScreen extends StatefulWidget {
 
 class _DocumentUploadScreenState extends State<DocumentUploadScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   String? _selectedFileName;
+  String? _selectedImagePath;
   final ImagePicker _picker = ImagePicker();
   
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +48,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _categoryController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -63,6 +71,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
       if (image != null) {
         setState(() {
           _selectedFileName = image.name;
+          _selectedImagePath = image.path;
         });
       }
     } catch (e) {
@@ -196,8 +205,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
               children: [
                 Text('Upload Detail', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 24),
-                _buildInputField('Document Name', 'Enter document title'),
-                _buildInputField('Category', 'Select Category'),
+                _buildInputField('Document Name', 'Enter document title', _nameController),
+                _buildInputField('Category', 'Select Category', _categoryController),
                 const SizedBox(height: 8),
                 Text('Document File', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF475569))),
                 const SizedBox(height: 12),
@@ -205,7 +214,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
                   onTap: _showSourceSelection,
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(20),
@@ -213,7 +222,19 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.cloud_upload_outlined, size: 48, color: Color(0xFF26A69A)),
+                        if (_selectedImagePath != null)
+                          Container(
+                            height: 120,
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(image: FileImage(File(_selectedImagePath!)), fit: BoxFit.cover),
+                            ),
+                          )
+                        else
+                          const Icon(Icons.cloud_upload_outlined, size: 48, color: Color(0xFF26A69A)),
+                        
                         const SizedBox(height: 16),
                         Text(
                           _selectedFileName ?? 'Click to upload or drag and drop',
@@ -224,7 +245,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        Text('PDF, PNG, JPG (max. 10MB)', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
+                        if (_selectedFileName == null)
+                          Text('PDF, PNG, JPG (max. 10MB)', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
                       ],
                     ),
                   ),
@@ -234,7 +256,36 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              if (_selectedFileName != null) {
+                final newDoc = DocumentItem(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: _nameController.text.isEmpty ? _selectedFileName! : _nameController.text,
+                  category: _categoryController.text.isEmpty ? 'General' : _categoryController.text,
+                  fileUrl: _selectedImagePath ?? '',
+                  fileSize: '2.4 MB', // Dummy size
+                  uploadDate: DateFormat('dd MMM yyyy').format(DateTime.now()),
+                );
+
+                context.read<DocumentProvider>().addLocalDocument(newDoc);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Document saved successfully!'), backgroundColor: Colors.green),
+                );
+                
+                setState(() {
+                  _isFormVisible = false;
+                  _selectedFileName = null;
+                  _selectedImagePath = null;
+                  _nameController.clear();
+                  _categoryController.clear();
+                });
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select a file first'), backgroundColor: Colors.red),
+                );
+              }
+            },
             icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white),
             label: Text(
               'Save Document',
@@ -332,7 +383,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
     );
   }
 
-  Widget _buildInputField(String label, String hint) {
+  Widget _buildInputField(String label, String hint, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -343,7 +394,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> with Single
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-            child: TextField(decoration: InputDecoration(hintText: hint, border: InputBorder.none, hintStyle: const TextStyle(fontSize: 13))),
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(hintText: hint, border: InputBorder.none, hintStyle: const TextStyle(fontSize: 13)),
+            ),
           ),
         ],
       ),

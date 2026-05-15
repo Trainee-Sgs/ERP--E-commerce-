@@ -13,7 +13,7 @@ class AddressBookScreen extends StatefulWidget {
 
 class _AddressBookScreenState extends State<AddressBookScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   bool _isGridView = false;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;

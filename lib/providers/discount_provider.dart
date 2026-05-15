@@ -5,32 +5,44 @@ import '../services/local_storage.dart';
 
 class DiscountItem {
   final String id;
-  final String discountId;
-  final String discountName;
+  final String date;
+  final String productName;
+  final String productCategory;
   final String discountType;
   final String discountValue;
+  final String validFrom;
+  final String validTo;
   final String status;
-  final String createdAt;
+  final String remarks;
+  final String productCode;
 
   DiscountItem({
     required this.id,
-    required this.discountId,
-    required this.discountName,
+    required this.date,
+    required this.productName,
+    required this.productCategory,
     required this.discountType,
     required this.discountValue,
+    required this.validFrom,
+    required this.validTo,
     required this.status,
-    required this.createdAt,
+    required this.remarks,
+    required this.productCode,
   });
 
   factory DiscountItem.fromJson(Map<String, dynamic> json) {
     return DiscountItem(
-      id:            json['id']?.toString()           ?? '',
-      discountId:    json['discount_id']?.toString()   ?? '',
-      discountName:  json['discount_name']?.toString() ?? '',
-      discountType:  json['discount_type']?.toString() ?? '',
-      discountValue: json['discount_value']?.toString()?? '0.00',
-      status:        json['status']?.toString()       ?? '',
-      createdAt:     json['created_at']?.toString()    ?? '',
+      id:              json['id']?.toString()               ?? '',
+      date:            (json['date'] ?? json['created_at'])?.toString() ?? '',
+      productName:     (json['product_name'] ?? json['discount_name'])?.toString() ?? '',
+      productCategory: (json['product_category'] ?? json['category'])?.toString() ?? '',
+      discountType:    json['discount_type']?.toString()    ?? '',
+      discountValue:   json['discount_value']?.toString()   ?? '0.00',
+      validFrom:       json['valid_from']?.toString()       ?? '',
+      validTo:         json['valid_to']?.toString()         ?? '',
+      status:          json['status']?.toString()           ?? '',
+      remarks:         json['remarks']?.toString()          ?? '',
+      productCode:     json['product_code']?.toString()     ?? '',
     );
   }
 }

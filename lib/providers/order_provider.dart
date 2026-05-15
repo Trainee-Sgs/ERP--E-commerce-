@@ -215,6 +215,60 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Update order status ──────────────────────────────────────────────────
+  Future<bool> updateOrderStatus(String orderId, String newStatus) async {
+    _isSaving = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      // In a real ERP, you'd send an API request here.
+      // Example: type: '2', form: 'sm_main_form_80520', id: orderId, order_status: newStatus
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      final index = _orders.indexWhere((o) => o.id == orderId);
+      if (index != -1) {
+        final oldOrder = _orders[index];
+        _orders[index] = OrderItem(
+          id:                 oldOrder.id,
+          customer:           oldOrder.customer,
+          amount:             oldOrder.amount,
+          status:             newStatus,
+          billingAddress:     oldOrder.billingAddress,
+          shippingAddress:    oldOrder.shippingAddress,
+          shippingMethod:     oldOrder.shippingMethod,
+          shippingCost:       oldOrder.shippingCost,
+          totalPrice:         oldOrder.totalPrice,
+          orderDate:          oldOrder.orderDate,
+          cancellationDate:   oldOrder.cancellationDate,
+          cancellationReason: oldOrder.cancellationReason,
+          cancelledBy:        oldOrder.cancelledBy,
+          trackingNumber:     oldOrder.trackingNumber,
+          paymentStatus:      oldOrder.paymentStatus,
+          paymentMethod:      oldOrder.paymentMethod,
+          couponCode:         oldOrder.couponCode,
+          refundStatus:       oldOrder.refundStatus,
+          accountNumber:      oldOrder.accountNumber,
+          bankName:           oldOrder.bankName,
+          holderName:         oldOrder.holderName,
+          ifsc:               oldOrder.ifsc,
+          productCode:        oldOrder.productCode,
+          orderNo:            oldOrder.orderNo,
+          customerId:         oldOrder.customerId,
+          dtime:              oldOrder.dtime,
+        );
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to update status: $e';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   // ── Insert order ────────────────────────────────────────────────────────
   Future<bool> insertOrder(OrderItem order) async {
     _isSaving = true;

@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:erp_ecommerce/widgets/app_drawer.dart';
 import 'package:erp_ecommerce/widgets/app_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
 import '../access module/all_orders_screen.dart';
 import '../product modules/product_list_screen.dart';
 import '../customer modules/customer_list_form_screen.dart';
@@ -126,30 +127,36 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction('Orders\nMgmt', Icons.shopping_bag, Colors.redAccent, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AllOrdersScreen()));
-                      }),
-                      _buildQuickAction('Product\nCatelog', Icons.inventory_2, Colors.teal, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductListScreen()));
-                      }),
-                      _buildQuickAction('Customer\nMgmt', Icons.groups, Colors.deepPurple, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerListFormScreen()));
-                      }),
+                      if (_isVisible(context, 'Orders'))
+                        _buildQuickAction('Orders\nMgmt', Icons.shopping_bag, Colors.redAccent, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const AllOrdersScreen()));
+                        }),
+                      if (_isVisible(context, 'Ecom Product List'))
+                        _buildQuickAction('Product\nCatelog', Icons.inventory_2, Colors.teal, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductListScreen()));
+                        }),
+                      if (_isVisible(context, 'Customers'))
+                        _buildQuickAction('Customer\nMgmt', Icons.groups, Colors.deepPurple, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerListFormScreen()));
+                        }),
                     ],
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction('Marketing\n& Promos', Icons.trending_up, Colors.green, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const DiscountListScreen()));
-                      }),
-                      _buildQuickAction('Inventory\nMgmt', Icons.assignment, Colors.pink, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const EcomProductScreen()));
-                      }),
-                      _buildQuickAction('Shipping\n& Delivery', Icons.local_shipping, Colors.orange, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AddressBookScreen()));
-                      }),
+                      if (_isVisible(context, 'Discount list'))
+                        _buildQuickAction('Marketing\n& Promos', Icons.trending_up, Colors.green, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const DiscountListScreen()));
+                        }),
+                      if (_isVisible(context, 'E com Product'))
+                        _buildQuickAction('Inventory\nMgmt', Icons.assignment, Colors.pink, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EcomProductScreen()));
+                        }),
+                      if (_isVisible(context, 'Address Book'))
+                        _buildQuickAction('Shipping\n& Delivery', Icons.local_shipping, Colors.orange, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const AddressBookScreen()));
+                        }),
                     ],
                   ),
                 ],
@@ -313,6 +320,18 @@ class DashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Helper to check visibility from the global MenuProvider
+  bool _isVisible(BuildContext context, String title) {
+    try {
+      // Use dynamic to avoid circular dependency with the main app's MenuProvider
+      final menuProvider = Provider.of<dynamic>(context, listen: false);
+      return menuProvider.isSubMenuVisible("E-COMMERCE", title);
+    } catch (e) {
+      // Default to visible if provider not found
+      return true;
+    }
   }
 
   Widget _buildStatCard({

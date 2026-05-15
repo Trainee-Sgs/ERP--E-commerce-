@@ -14,7 +14,7 @@ class DiscountListScreen extends StatefulWidget {
 
 class _DiscountListScreenState extends State<DiscountListScreen> with SingleTickerProviderStateMixin {
   bool _isFabExpanded = false;
-  bool _isFormVisible = true;
+  bool _isFormVisible = false;
   bool _isGridView = false;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
@@ -194,7 +194,7 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: _buildSearchRow(),
         ),
         Expanded(
@@ -209,13 +209,20 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const Icon(Icons.error_outline, color: Colors.red, size: 64),
                       const SizedBox(height: 16),
-                      Text(provider.errorMessage, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
+                      Text(provider.errorMessage, 
+                        style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () => provider.fetchDiscounts(),
-                        child: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF26A69A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                        child: Text('Retry Connection', style: GoogleFonts.poppins(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -227,9 +234,20 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.local_offer_outlined, color: Colors.grey, size: 48),
-                      const SizedBox(height: 16),
-                      Text('No discounts found', style: GoogleFonts.poppins(color: Colors.grey)),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF26A69A).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.local_offer_outlined, color: Color(0xFF26A69A), size: 64),
+                      ),
+                      const SizedBox(height: 24),
+                      Text('No Discounts Found', 
+                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                      const SizedBox(height: 8),
+                      Text('No active discount campaigns at this time', 
+                        style: GoogleFonts.poppins(color: Colors.grey[600])),
                     ],
                   ),
                 );
@@ -239,86 +257,168 @@ class _DiscountListScreenState extends State<DiscountListScreen> with SingleTick
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
+                  childAspectRatio: 0.62, // Increased height for metadata
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
                 ),
                 itemCount: provider.discounts.length,
                 itemBuilder: (context, index) {
                   final item = provider.discounts[index];
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                            ),
-                            child: const Center(child: Icon(Icons.percent, color: Colors.orange)),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.discountId.isEmpty ? 'ID: ${item.id}' : 'Code: ${item.discountId}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                item.discountName,
-                                style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    item.discountType == 'Percentage' ? '${item.discountValue}% OFF' : '₹${item.discountValue} OFF',
-                                    style: const TextStyle(color: Color(0xFF26A69A), fontWeight: FontWeight.bold),
-                                  ),
-                                  if (item.status.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: (item.status.toLowerCase() == 'active' ? Colors.green : Colors.grey).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        item.status,
-                                        style: TextStyle(
-                                          color: item.status.toLowerCase() == 'active' ? Colors.green : Colors.grey,
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                  return _buildDiscountCard(item);
                 },
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDiscountCard(DiscountItem item) {
+    final bool isActive = item.status.toLowerCase() == 'active';
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            height: 90,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF0FDFA),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Stack(
+              children: [
+                const Center(
+                  child: Icon(Icons.local_offer_outlined, size: 40, color: Color(0xFF26A69A)),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isActive ? Colors.green : Colors.grey).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.status.toUpperCase(),
+                      style: GoogleFonts.poppins(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: isActive ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    color: const Color(0xFF26A69A).withOpacity(0.1),
+                    child: Text(
+                      item.discountType == 'Percentage' ? '${item.discountValue}% OFF' : '₹${item.discountValue} OFF',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: const Color(0xFF26A69A),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.productName.isEmpty ? 'Untitled Promo' : item.productName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.productCategory.isEmpty ? 'General Category' : item.productCategory,
+                    style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                  const Divider(height: 16),
+                  _buildCompactRow(Icons.tag, 'Code: ${item.productCode}'),
+                  _buildCompactRow(Icons.calendar_today, 'Date: ${item.date.split(' ')[0]}'),
+                  _buildCompactRow(Icons.timer_outlined, 'V: ${item.validFrom.split(' ')[0]} - ${item.validTo.split(' ')[0]}'),
+                  if (item.remarks.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 10, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              item.remarks,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(fontSize: 9, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 10, color: const Color(0xFF26A69A)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF475569),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
